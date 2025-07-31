@@ -49,7 +49,7 @@ impl<'s> ElementParser {
     }
 
     /// 파서 내의 [`Html`]을 반환합니다.
-    pub(crate) fn document(&'s self) -> &'s Html {
+    pub fn document(&'s self) -> &'s Html {
         &self.0
     }
 }
