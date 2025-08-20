@@ -88,4 +88,7 @@ pub mod error;
 /// WebDynpro 엘리먼트가 발생시키는 이벤트 처리
 pub mod event;
 
+/// WebDynpro의 페이지를 파싱, 업데이트하는 [`Body`] 구현
+pub mod body;
+
 pub mod utils;

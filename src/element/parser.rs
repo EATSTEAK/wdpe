@@ -1,4 +1,4 @@
-use crate::client::body::Body;
+use crate::body::Body;
 use crate::element::sub::SubElement;
 use crate::element::sub::definition::SubElementDefinition;
 use crate::element::{Element, definition::ElementDefinition};
