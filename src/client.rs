@@ -1,3 +1,4 @@
+use crate::body::{Body, BodyUpdate};
 use crate::event::ucf_parameters::UcfParameters;
 use crate::event::{EventBuilder, EventBuilderError};
 use crate::{
@@ -5,7 +6,6 @@ use crate::{
     event::{Event, event_queue::EventQueue},
     utils::{DEFAULT_USER_AGENT, default_header},
 };
-use body::{Body, BodyUpdate};
 use reqwest::{RequestBuilder, cookie::Jar, header::*};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -223,7 +223,7 @@ fn create_form_request_event(
         .build()
 }
 
-trait Requests {
+pub(crate) trait Requests {
     fn wd_navigate(&self, base_url: &Url, app_name: &str) -> RequestBuilder;
 
     fn wd_xhr(
@@ -285,11 +285,11 @@ impl Requests for reqwest::Client {
 
 #[derive(Debug)]
 pub(crate) struct SapSsrClient {
-    action: String,
-    charset: String,
-    wd_secure_id: String,
+    pub action: String,
+    pub charset: String,
+    pub wd_secure_id: String,
     pub app_name: String,
-    use_beacon: bool,
+    pub use_beacon: bool,
 }
 
 /// 전달받은 이벤트가 어떻게 처리되었는지 표현합니다.
@@ -299,10 +299,6 @@ pub enum EventProcessResult {
     /// 전달받은 이벤트가 큐에 추가된 후 서버에 전송되었을 경우
     Sent,
 }
-
-/// WebDynpro의 페이지를 파싱, 업데이트하는 [`Body`] 구현
-pub mod body;
-
 #[cfg(test)]
 mod test {
     use url::Url;

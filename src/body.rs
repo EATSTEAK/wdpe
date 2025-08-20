@@ -5,7 +5,7 @@ use std::hash::Hash;
 
 use crate::error::{BodyError, UpdateBodyError};
 
-use super::SapSsrClient;
+use crate::client::SapSsrClient;
 
 type BodyUpdateWindowId = String;
 type BodyUpdateContentId = String;
@@ -275,8 +275,8 @@ fn parse_sap_ssr_client(document: &str) -> Result<SapSsrClient, BodyError> {
 
 #[cfg(test)]
 mod test {
+    use crate::body::parse_sap_ssr_client;
     use crate::client::Requests;
-    use crate::client::body::parse_sap_ssr_client;
     use crate::utils::DEFAULT_USER_AGENT;
     use reqwest::cookie::Jar;
     use std::sync::Arc;
