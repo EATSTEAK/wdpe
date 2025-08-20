@@ -73,6 +73,9 @@ pub enum ClientError {
     /// 주어진 Url에 대해 어떤 쿠키도 찾을 수 없음
     #[error("Empty cookie store for given url: {0}")]
     NoCookies(String),
+    /// 네트워크 요청 오류
+    #[error("Network error: {0}")]
+    NetworkError(String),
 }
 
 /// WebDynpro 문서 업데이트 중 발생하는 오류의 이늄

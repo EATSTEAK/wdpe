@@ -285,7 +285,7 @@ mod test {
     #[cfg(feature = "reqwest")]
     #[tokio::test]
     async fn test_ssr_form() {
-        use crate::requests::Requests;
+        use crate::requests::WebDynproRequestsAsync as _;
 
         let jar = Arc::new(Jar::default());
         let client = reqwest::Client::builder()
@@ -295,14 +295,13 @@ mod test {
             .build()
             .unwrap();
         let result = client
-            .wd_navigate(
+            .navigate(
                 &Url::parse("https://ecc.ssu.ac.kr/sap/bc/webdynpro/SAP/").unwrap(),
                 "ZCMW2100",
             )
-            .send()
             .await
             .unwrap();
-        let ssr_client = parse_sap_ssr_client(&result.text().await.unwrap()).unwrap();
+        let ssr_client = parse_sap_ssr_client(&result).unwrap();
         dbg!(ssr_client);
     }
 }
