@@ -5,7 +5,7 @@ use std::hash::Hash;
 
 use crate::error::{BodyError, UpdateBodyError};
 
-use crate::client::SapSsrClient;
+use crate::state::SapSsrClient;
 
 type BodyUpdateWindowId = String;
 type BodyUpdateContentId = String;
@@ -20,7 +20,7 @@ pub(super) enum BodyUpdateType {
 
 #[derive(Debug)]
 #[allow(unused)]
-pub(crate) struct BodyUpdate {
+pub struct BodyUpdate {
     update: Option<BodyUpdateType>,
     initialize_ids: Option<String>,
     script_calls: Option<Vec<String>>,
@@ -29,7 +29,7 @@ pub(crate) struct BodyUpdate {
 }
 
 impl BodyUpdate {
-    pub(super) fn new(response: &str) -> Result<BodyUpdate, UpdateBodyError> {
+    pub fn new(response: &str) -> Result<BodyUpdate, UpdateBodyError> {
         let response_xml = roxmltree::Document::parse(response)?;
         let updates = response_xml
             .root()
@@ -152,7 +152,7 @@ impl Body {
         &self.raw_body
     }
 
-    pub(crate) fn ssr_client(&self) -> &SapSsrClient {
+    pub fn ssr_client(&self) -> &SapSsrClient {
         &self.sap_ssr_client
     }
 
@@ -276,14 +276,17 @@ fn parse_sap_ssr_client(document: &str) -> Result<SapSsrClient, BodyError> {
 #[cfg(test)]
 mod test {
     use crate::body::parse_sap_ssr_client;
-    use crate::client::Requests;
-    use crate::utils::DEFAULT_USER_AGENT;
     use reqwest::cookie::Jar;
     use std::sync::Arc;
     use url::Url;
 
+    const DEFAULT_USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36";
+
+    #[cfg(feature = "reqwest")]
     #[tokio::test]
     async fn test_ssr_form() {
+        use crate::requests::Requests;
+
         let jar = Arc::new(Jar::default());
         let client = reqwest::Client::builder()
             .cookie_provider(jar)

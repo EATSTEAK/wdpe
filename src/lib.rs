@@ -73,11 +73,11 @@
 //! [`ClientInspector`]: element::system::ClientInspector
 //! [`Custom`]: element::system::Custom
 
-/// WebDynpro 페이지의 기본 클라이언트
-pub mod client;
 #[cfg(feature = "element")]
 /// WebDynpro 페이지를 구성하는 엘리먼트
 pub mod element;
+/// WebDynpro 페이지의 상태 관리 구조체
+pub mod state;
 
 #[cfg(feature = "element")]
 /// WebDynpro 클라이언트를 조작하는 명령
@@ -91,4 +91,6 @@ pub mod event;
 /// WebDynpro의 페이지를 파싱, 업데이트하는 [`Body`] 구현
 pub mod body;
 
-pub mod utils;
+#[cfg(feature = "reqwest")]
+/// reqwest를 사용한 WebDynpro 클라이언트의 HTTP 요청 기능
+pub mod requests;

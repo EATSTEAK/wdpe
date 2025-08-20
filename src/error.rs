@@ -45,12 +45,14 @@ impl From<ElementError> for WebDynproError {
 #[derive(Error, Debug)]
 pub enum ClientError {
     /// 웹 리퀘스트에 실패
+    #[cfg(feature = "reqwest")]
     #[error("Failed to request from web")]
     FailedRequest(#[from] reqwest::Error),
     /// HTML 문서를 파싱하지 못함
     #[error("Failed to parse HTML body")]
     Parse(#[from] BodyError),
     /// 웹 리퀘스트는 성공하였으나, 응답이 올바르지 않음
+    #[cfg(feature = "reqwest")]
     #[error("Request is made, but failed")]
     InvalidResponse(Box<reqwest::Response>),
     /// 클라이언트에서 사용하는 Base URL 파싱 실패
