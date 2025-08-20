@@ -1,13 +1,11 @@
 use crate::body::{Body, BodyUpdate};
-use crate::event::ucf_parameters::UcfParameters;
-use crate::event::{EventBuilder, EventBuilderError};
+use crate::event::event_queue::EnqueueEventResult;
 use crate::{
     error::{ClientError, WebDynproError},
     event::{Event, event_queue::EventQueue},
     utils::{DEFAULT_USER_AGENT, default_header},
 };
 use reqwest::{RequestBuilder, cookie::Jar, header::*};
-use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use url::Url;
@@ -117,25 +115,18 @@ impl WebDynproClient {
         force_send: bool,
         event: Event,
     ) -> Result<EventProcessResult, WebDynproError> {
-        let form_req = create_form_request_event(false, "", "", false, false).or(Err(
-            ClientError::NoSuchForm("sap.client.SsrClient.form".to_string()),
-        ))?;
-        if (!event.is_enqueable() && event.is_submitable()) || force_send {
-            {
-                self.add_event(event);
-                self.add_event(form_req.to_owned());
-            }
+        let enqueue_result = self.add_event(event);
+        if matches!(enqueue_result, EnqueueEventResult::ShouldProcess) || force_send {
             let update = { self.send_events().await? };
             self.mutate_body(update)?;
             Ok(EventProcessResult::Sent)
         } else {
-            self.add_event(event);
             Ok(EventProcessResult::Enqueued)
         }
     }
 
     /// 이벤트를 이벤트 큐에 추가합니다.
-    fn add_event(&mut self, event: Event) {
+    fn add_event(&mut self, event: Event) -> EnqueueEventResult {
         self.event_queue.try_lock().unwrap().add(event)
     }
 
@@ -148,7 +139,7 @@ impl WebDynproClient {
     /// 이벤트 큐 내부 내용을 서버에 전송하고 응답을 받습니다.
     async fn event_request(&mut self) -> Result<String, ClientError> {
         let mut event_queue = self.event_queue.lock().await;
-        let serialized_events = event_queue.serialize_and_clear();
+        let serialized_events = event_queue.serialize_and_clear_with_form_event()?;
         let res = self
             .client
             .wd_xhr(&self.base_url, self.body.ssr_client(), &serialized_events)?
@@ -198,29 +189,6 @@ impl<'a> WebDynproClientBuilder<'a> {
             None => Ok(WebDynproClient::new(base_url, self.name).await?),
         }
     }
-}
-
-fn create_form_request_event(
-    is_async: bool,
-    focus_info: &str,
-    hash: &str,
-    dom_changed: bool,
-    is_dirty: bool,
-) -> Result<Event, EventBuilderError> {
-    let mut form_parameters: HashMap<String, String> = HashMap::new();
-    form_parameters.insert("Id".to_string(), "sap.client.SsrClient.form".to_string());
-    form_parameters.insert("Async".to_string(), is_async.to_string());
-    form_parameters.insert("FocusInfo".to_string(), focus_info.to_string());
-    form_parameters.insert("Hash".to_string(), hash.to_string());
-    form_parameters.insert("DomChanged".to_string(), dom_changed.to_string());
-    form_parameters.insert("IsDirty".to_string(), is_dirty.to_string());
-    EventBuilder::default()
-        .control("Form".to_string())
-        .event("Request".to_string())
-        .parameters(form_parameters)
-        .ucf_parameters(UcfParameters::default())
-        .custom_parameters(HashMap::new())
-        .build()
 }
 
 pub(crate) trait Requests {
