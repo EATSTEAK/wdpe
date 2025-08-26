@@ -42,7 +42,7 @@ fn decode_hex(s: &str) -> Result<Vec<u16>, ParseIntError> {
 }
 
 /// 이벤트 큐의 문자열을 일반 문자열으로 변환합니다.
-pub fn unescape_str(text: &str) -> Result<Cow<str>, EventStrUnescapeError> {
+pub fn unescape_str(text: &str) -> Result<Cow<'_, str>, EventStrUnescapeError> {
     let bytes = text.as_bytes();
 
     let mut owned = None;
