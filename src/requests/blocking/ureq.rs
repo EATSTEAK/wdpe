@@ -1,19 +1,14 @@
 use crate::{
     body::{Body, BodyUpdate},
     error::ClientError,
-    requests::blocking::WebDynproRequests,
+    requests::{blocking::WebDynproRequests, build_navigation_url},
     state::SapSsrClient,
 };
 use url::Url;
 
 impl WebDynproRequests for ureq::Agent {
     fn navigate(&self, base_url: &Url, name: &str) -> Result<Body, ClientError> {
-        let mut url = base_url.to_string();
-        if !url.ends_with('/') {
-            url.push('/');
-        }
-        url.push_str(name);
-        url.push_str("?sap-wd-stableids=X#");
+        let url = build_navigation_url(base_url, name);
 
         let response = self
             .get(&url)

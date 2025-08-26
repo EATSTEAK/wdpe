@@ -22,12 +22,7 @@ pub fn wd_xhr_header() -> HeaderMap {
 
 impl WebDynproRequests for reqwest::Client {
     async fn navigate(&self, base_url: &Url, name: &str) -> Result<Body, ClientError> {
-        let mut url = base_url.to_string();
-        if !url.ends_with('/') {
-            url.push('/');
-        }
-        url.push_str(name);
-        url.push_str("?sap-wd-stableids=X#");
+        let url = super::build_navigation_url(base_url, name);
 
         let response = self
             .get(&url)

@@ -27,3 +27,13 @@ pub trait WebDynproRequests {
         serialized_events: &str,
     ) -> impl std::future::Future<Output = Result<BodyUpdate, ClientError>> + Send;
 }
+
+fn build_navigation_url(base_url: &Url, name: &str) -> String {
+    let mut url = base_url.to_string();
+    if !url.ends_with('/') {
+        url.push('/');
+    }
+    url.push_str(name);
+    url.push_str("?sap-wd-stableids=X#");
+    url
+}
