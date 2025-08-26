@@ -3,6 +3,7 @@ use url::Url;
 use crate::{
     body::{Body, BodyUpdate},
     error::ClientError,
+    state::SapSsrClient,
 };
 
 #[cfg(feature = "ureq")]
@@ -17,7 +18,7 @@ pub trait WebDynproRequests {
     fn send_events(
         &self,
         base_url: &Url,
-        name: &str,
+        ssr_client: &SapSsrClient,
         serialized_events: &str,
     ) -> Result<BodyUpdate, ClientError>;
 }

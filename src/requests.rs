@@ -3,6 +3,7 @@ use url::Url;
 use crate::{
     body::{Body, BodyUpdate},
     error::ClientError,
+    state::SapSsrClient,
 };
 
 pub mod blocking;
@@ -22,7 +23,7 @@ pub trait WebDynproRequests {
     fn send_events(
         &self,
         base_url: &Url,
-        name: &str,
+        ssr_client: &SapSsrClient,
         serialized_events: &str,
     ) -> impl std::future::Future<Output = Result<BodyUpdate, ClientError>> + Send;
 }

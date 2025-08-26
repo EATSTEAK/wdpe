@@ -2,6 +2,7 @@ use crate::{
     body::{Body, BodyUpdate},
     error::ClientError,
     requests::blocking::WebDynproRequests,
+    state::SapSsrClient,
 };
 use url::Url;
 
@@ -37,15 +38,24 @@ impl WebDynproRequests for ureq::Agent {
     fn send_events(
         &self,
         base_url: &Url,
-        name: &str,
+        ssr_client: &SapSsrClient,
         serialized_events: &str,
     ) -> Result<BodyUpdate, ClientError> {
-        let mut url = base_url.to_string();
-        if !url.ends_with('/') {
-            url.push('/');
-        }
-        url.push_str(name);
-        url.push_str("?sap-wd-stableids=X#");
+        let url = ssr_client.build_action_url(base_url)?;
+        let params = [
+            ("sap-charset", ssr_client.charset.as_str()),
+            ("sap-wd-secure-id", ssr_client.wd_secure_id.as_str()),
+            ("fesrAppName", ssr_client.app_name.as_str()),
+            (
+                "fesrUseBeacon",
+                if ssr_client.use_beacon {
+                    "true"
+                } else {
+                    "false"
+                },
+            ),
+            ("SAPEVENTQUEUE", serialized_events),
+        ];
 
         let response = self
             .post(&url)
@@ -55,7 +65,7 @@ impl WebDynproRequests for ureq::Agent {
                 "application/x-www-form-urlencoded; charset=UTF-8",
             )
             .header("X-Requested-With", "XMLHttpRequest")
-            .send(serialized_events)
+            .send_form(params)
             .map_err(|e| ClientError::FailedRequest(format!("Failed to send events: {e}")))?;
 
         let status = response.status();

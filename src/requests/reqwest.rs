@@ -1,5 +1,6 @@
 use crate::body::Body;
 use crate::error::ClientError;
+use crate::state::SapSsrClient;
 use crate::{body::BodyUpdate, requests::WebDynproRequests};
 use reqwest::header::{ACCEPT, CONTENT_TYPE, HeaderMap, HeaderValue};
 use url::Url;
@@ -49,20 +50,29 @@ impl WebDynproRequests for reqwest::Client {
     async fn send_events(
         &self,
         base_url: &Url,
-        name: &str,
+        ssr_client: &SapSsrClient,
         serialized_events: &str,
     ) -> Result<BodyUpdate, ClientError> {
-        let mut url = base_url.to_string();
-        if !url.ends_with('/') {
-            url.push('/');
-        }
-        url.push_str(name);
-        url.push_str("?sap-wd-stableids=X#");
+        let url = ssr_client.build_action_url(base_url)?;
+        let params = [
+            ("sap-charset", ssr_client.charset.as_str()),
+            ("sap-wd-secure-id", ssr_client.wd_secure_id.as_str()),
+            ("fesrAppName", ssr_client.app_name.as_str()),
+            (
+                "fesrUseBeacon",
+                if ssr_client.use_beacon {
+                    "true"
+                } else {
+                    "false"
+                },
+            ),
+            ("SAPEVENTQUEUE", serialized_events),
+        ];
 
         let response = self
-            .post(&url)
+            .post(url)
             .headers(wd_xhr_header())
-            .body(serialized_events.to_string())
+            .form(&params)
             .send()
             .await
             .map_err(|e| ClientError::FailedRequest(e.to_string()))?;
