@@ -1,5 +1,6 @@
+use crate::body::Body;
 use crate::error::ClientError;
-use crate::{body::BodyUpdate, requests::WebDynproRequestsAsync};
+use crate::{body::BodyUpdate, requests::WebDynproRequests};
 use reqwest::header::{ACCEPT, CONTENT_TYPE, HeaderMap, HeaderValue};
 use url::Url;
 
@@ -18,8 +19,8 @@ pub fn wd_xhr_header() -> HeaderMap {
     headers
 }
 
-impl WebDynproRequestsAsync for reqwest::Client {
-    async fn navigate(&self, base_url: &Url, name: &str) -> Result<String, ClientError> {
+impl WebDynproRequests for reqwest::Client {
+    async fn navigate(&self, base_url: &Url, name: &str) -> Result<Body, ClientError> {
         let mut url = base_url.to_string();
         if !url.ends_with('/') {
             url.push('/');
@@ -27,13 +28,22 @@ impl WebDynproRequestsAsync for reqwest::Client {
         url.push_str(name);
         url.push_str("?sap-wd-stableids=X#");
 
-        let response = self.get(&url).send().await?;
+        let response = self
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| ClientError::FailedRequest(e.to_string()))?;
 
         if !response.status().is_success() {
-            return Err(ClientError::InvalidResponse(Box::new(response)));
+            return Err(ClientError::InvalidResponse(response.status().to_string()));
         }
 
-        Ok(response.text().await?)
+        Ok(Body::new(
+            response
+                .text()
+                .await
+                .map_err(|e| ClientError::FailedRequest(e.to_string()))?,
+        )?)
     }
 
     async fn send_events(
@@ -54,13 +64,17 @@ impl WebDynproRequestsAsync for reqwest::Client {
             .headers(wd_xhr_header())
             .body(serialized_events.to_string())
             .send()
-            .await?;
+            .await
+            .map_err(|e| ClientError::FailedRequest(e.to_string()))?;
 
         if !response.status().is_success() {
-            return Err(ClientError::InvalidResponse(Box::new(response)));
+            return Err(ClientError::InvalidResponse(response.status().to_string()));
         }
 
-        let response_text = response.text().await?;
+        let response_text = response
+            .text()
+            .await
+            .map_err(|e| ClientError::FailedRequest(e.to_string()))?;
         Ok(BodyUpdate::new(&response_text)?)
     }
 }

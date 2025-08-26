@@ -19,7 +19,7 @@ custom_debug_derive = "0.6.2"
 derive_builder = "0.20.2"
 html-escape = "0.2.13"
 lol_html = "2.6.0"
-regex-lite = "0.1.6"
+regex-lite = "0.1.7"
 reqwest = { version = "0.12.23", features = [
   "charset",
   "http2",
@@ -36,9 +36,7 @@ serde_json = "1.0.143"
 thiserror = "2.0.16"
 tokio = { version = "1", features = ["sync"] }
 tracing = "0.1.41"
-url = "2.5.4"
-ureq = { version = "2.9", default-features = false, features = ["tls", "cookies"] }
-async-trait = "0.1.74"
+url = "2.5.7"
 
 [dev-dependencies]
 tokio-test = "0.4.4"
