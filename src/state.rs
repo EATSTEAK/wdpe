@@ -96,7 +96,7 @@ impl SapSsrClient {
         if let Some(host_str) = base_url.host_str() {
             url.push_str(host_str);
         } else {
-            return Err(ClientError::InvalidBaseUrl(base_url.to_string()))?;
+            return Err(ClientError::InvalidBaseUrl(base_url.to_string()));
         }
         if let Some(port) = base_url.port() {
             url.push(':');

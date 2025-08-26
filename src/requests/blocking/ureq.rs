@@ -74,6 +74,6 @@ impl WebDynproRequests for ureq::Agent {
             .into_body()
             .read_to_string()
             .map_err(|e| ClientError::InvalidResponse(format!("Failed to read response: {e}")))?;
-        Ok(crate::body::BodyUpdate::new(&response_text)?)
+        Ok(BodyUpdate::new(&response_text)?)
     }
 }
