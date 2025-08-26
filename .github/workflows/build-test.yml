@@ -1,0 +1,44 @@
+name: Build & Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ["main"]
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: taiki-e/install-action@cargo-llvm-cov
+      - uses: taiki-e/install-action@nextest
+      - name: Retrieve cache
+        uses: Leafwing-Studios/cargo-cache@v2
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            version:
+              - 'Cargo.toml'
+      - name: Publish dry-run
+        if: steps.changes.outputs.version == 'true'
+        run: cargo publish --dry-run --verbose
+      - name: Generate code coverage
+        env:
+          RUST_LOG: info
+        run: cargo llvm-cov --all-features --lcov --output-path lcov.info nextest --retries 2
+      - name: Upload coverage to Codecov
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        if: ${{ env.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: EATSTEAK/wdpe
+          files: lcov.info
+          fail_ci_if_error: true
