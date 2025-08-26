@@ -5,6 +5,9 @@ use crate::{
     error::ClientError,
 };
 
+#[cfg(feature = "ureq")]
+pub mod ureq;
+
 /// WebDynpro 서버에 요청하여 응답을 동기적으로 반환하는 트레이트
 pub trait WebDynproRequests {
     /// WebDynpro 애플리케이션으로 이동하고 HTML 본문을 반환합니다.
