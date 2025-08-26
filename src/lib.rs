@@ -91,6 +91,5 @@ pub mod event;
 /// WebDynpro의 페이지를 파싱, 업데이트하는 [`Body`] 구현
 pub mod body;
 
-#[cfg(feature = "reqwest")]
 /// reqwest를 사용한 WebDynpro 클라이언트의 HTTP 요청 기능
 pub mod requests;
