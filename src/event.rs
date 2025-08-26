@@ -143,7 +143,8 @@ impl Event {
     }
 }
 
-pub(crate) mod event_queue;
+/// 이벤트 큐를 관리하는 모듈
+pub mod event_queue;
 /// 이벤트의 특성을 정의하는 [`UcfParameters`]
 pub mod ucf_parameters;
 

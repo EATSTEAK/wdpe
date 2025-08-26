@@ -14,6 +14,7 @@ pub enum EnqueueEventResult {
     Enqueued,
 }
 
+/// 이벤트 큐를 관리하는 구조체
 #[derive(Debug)]
 pub struct EventQueue {
     queue: LinkedList<Event>,
@@ -21,6 +22,7 @@ pub struct EventQueue {
 }
 
 impl EventQueue {
+    /// 새로운 `EventQueue`를 생성합니다.
     pub fn new() -> EventQueue {
         EventQueue {
             queue: LinkedList::new(),
@@ -28,6 +30,7 @@ impl EventQueue {
         }
     }
 
+    /// 이벤트 큐의 내용을 Form 이벤트와 함께 직렬화하고 큐를 비웁니다.
     pub fn serialize_and_clear_with_form_event(&mut self) -> Result<String, ClientError> {
         let form_req = create_form_request_event(false, "", "", false, false).or(Err(
             ClientError::NoSuchForm("sap.client.SsrClient.form".to_string()),
@@ -36,6 +39,7 @@ impl EventQueue {
         Ok(self.serialize_and_clear())
     }
 
+    /// 이벤트 큐의 내용을 직렬화하고 큐를 비웁니다.
     pub fn serialize_and_clear(&mut self) -> String {
         let mut owned = "".to_owned();
         let events = &self.queue;
@@ -49,6 +53,7 @@ impl EventQueue {
         owned
     }
 
+    /// 이벤트를 큐에 추가합니다.
     pub fn add(&mut self, evt: Event) -> EnqueueEventResult {
         if !evt.is_enqueable() && evt.is_submitable() {
             self.should_process = true;
@@ -61,9 +66,15 @@ impl EventQueue {
         }
     }
 
-    #[allow(unused)]
+    /// 이벤트를 큐에서 제거합니다.
     pub fn remove(&mut self) -> Option<Event> {
         self.queue.pop_front()
+    }
+}
+
+impl Default for EventQueue {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
