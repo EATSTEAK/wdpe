@@ -5,22 +5,25 @@ use std::hash::Hash;
 
 use crate::error::{BodyError, UpdateBodyError};
 
-use super::SapSsrClient;
+use crate::state::SapSsrClient;
 
 type BodyUpdateWindowId = String;
 type BodyUpdateContentId = String;
 type BodyUpdateControlId = String;
 
+/// 바디 업데이트 유형 구조체
 #[derive(Debug)]
-pub(super) enum BodyUpdateType {
-    #[allow(dead_code)]
+pub enum BodyUpdateType {
+    /// 제공된 BodyUpdate가 페이지 전체를 업데이트 할 경우
     Full(BodyUpdateWindowId, BodyUpdateContentId, String),
+    /// 제공된 BodyUpdate가 일부 컨트롤만 업데이트 할 경우
     Delta(BodyUpdateWindowId, HashMap<BodyUpdateControlId, String>),
 }
 
+/// [`Body`]를 업데이트 하기 위한 데이터 구조체
 #[derive(Debug)]
-#[allow(unused)]
-pub(crate) struct BodyUpdate {
+#[allow(dead_code)]
+pub struct BodyUpdate {
     update: Option<BodyUpdateType>,
     initialize_ids: Option<String>,
     script_calls: Option<Vec<String>>,
@@ -29,7 +32,8 @@ pub(crate) struct BodyUpdate {
 }
 
 impl BodyUpdate {
-    pub(super) fn new(response: &str) -> Result<BodyUpdate, UpdateBodyError> {
+    /// 새로운 `BodyUpdate`를 생성합니다.
+    pub fn new(response: &str) -> Result<BodyUpdate, UpdateBodyError> {
         let response_xml = roxmltree::Document::parse(response)?;
         let updates = response_xml
             .root()
@@ -139,10 +143,11 @@ impl Hash for Body {
 }
 
 impl Body {
-    pub(crate) fn new(body: String) -> Result<Body, BodyError> {
-        let sap_ssr_client = parse_sap_ssr_client(&body)?;
+    /// 새로운 `Body`를 Raw HTML 문자열으로 부터 생성합니다.
+    pub fn new(raw_body: String) -> Result<Body, BodyError> {
+        let sap_ssr_client = parse_sap_ssr_client(&raw_body)?;
         Ok(Body {
-            raw_body: body,
+            raw_body,
             sap_ssr_client,
         })
     }
@@ -152,7 +157,7 @@ impl Body {
         &self.raw_body
     }
 
-    pub(crate) fn ssr_client(&self) -> &SapSsrClient {
+    pub fn ssr_client(&self) -> &SapSsrClient {
         &self.sap_ssr_client
     }
 
@@ -275,15 +280,18 @@ fn parse_sap_ssr_client(document: &str) -> Result<SapSsrClient, BodyError> {
 
 #[cfg(test)]
 mod test {
-    use crate::client::Requests;
-    use crate::client::body::parse_sap_ssr_client;
-    use crate::utils::DEFAULT_USER_AGENT;
+    use crate::body::parse_sap_ssr_client;
     use reqwest::cookie::Jar;
     use std::sync::Arc;
     use url::Url;
 
+    const DEFAULT_USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36";
+
+    #[cfg(feature = "reqwest")]
     #[tokio::test]
     async fn test_ssr_form() {
+        use crate::requests::WebDynproRequests as _;
+
         let jar = Arc::new(Jar::default());
         let client = reqwest::Client::builder()
             .cookie_provider(jar)
@@ -292,14 +300,13 @@ mod test {
             .build()
             .unwrap();
         let result = client
-            .wd_navigate(
+            .navigate(
                 &Url::parse("https://ecc.ssu.ac.kr/sap/bc/webdynpro/SAP/").unwrap(),
                 "ZCMW2100",
             )
-            .send()
             .await
             .unwrap();
-        let ssr_client = parse_sap_ssr_client(&result.text().await.unwrap()).unwrap();
+        let ssr_client = parse_sap_ssr_client(result.raw_body()).unwrap();
         dbg!(ssr_client);
     }
 }

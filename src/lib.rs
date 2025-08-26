@@ -25,23 +25,42 @@
 //! 추가 정보는 [`LoadingPlaceholder`], [`ClientInspector`] 와 [`Custom`] 엘리먼트를 참고하십시오.
 //! ```ignore
 //! use futures::executor::block_on;
-//! use wdpe::{define_elements, element::text::Caption};
+//! use wdpe::event::event_queue::EnqueueEventResult;
+//! use wdpe::requests::WebDynproRequests as _;
+//! use wdpe::requests::{EventProcessResult, WebDynproState};
+//! use wdpe::{define_elements, element::{text::Caption, system::{ClientInspector, Custom, CustomClientInfo, LoadingPlaceholder}}};
 //!
-//! // WebDynproClient을 Wrap한 애플리케이션 struct를 새로 정의합니다.
+//! // 상태 관리를 위한 `WebDynproState`, 웹 요청을 위한 `reqwest::Client`를 가진 ExampleApplication
 //! pub struct ExampleApplication {
-//!   client: WebDynproClient
+//!   client: WebDynproState,
+//!   client: reqwest::Client
 //! };
+//!
+//! # const DEFAULT_USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36";
+//! const INITIAL_CLIENT_DATA_WD01: &str = "ClientWidth:1920px;ClientHeight:1000px;ScreenWidth:1920px;ScreenHeight:1080px;ScreenOrientation:landscape;ThemedTableRowHeight:33px;ThemedFormLayoutRowHeight:32px;ThemedSvgLibUrls:{\"SAPGUI-icons\":\"https://ecc.ssu.ac.kr:8443/sap/public/bc/ur/nw5/themes/~cache-20210223121230/Base/baseLib/sap_fiori_3/svg/libs/SAPGUI-icons.svg\",\"SAPWeb-icons\":\"https://ecc.ssu.ac.kr:8443/sap/public/bc/ur/nw5/themes/~cache-20210223121230/Base/baseLib/sap_fiori_3/svg/libs/SAPWeb-icons.svg\"};ThemeTags:Fiori_3,Touch;ThemeID:sap_fiori_3;SapThemeID:sap_fiori_3;DeviceType:DESKTOP";
+//! const INITIAL_CLIENT_DATA_WD02: &str = "ThemedTableRowHeight:25px";
 //!
 //! impl<'a> ExampleApplication {
 //!     // 엘리먼트를 정의하는 매크로
 //!     define_elements! {
 //!         // 담당자문의 정보에 해당하는 캡션의 ID 정의
 //!         CAPTION: Caption<'a> = "ZCMW_DEVINFO_RE.ID_D080C16F227F4D68751326DC40BB6BE0:MAIN.CAPTION";
+//!         CLIENT_INSPECTOR_WD01: ClientInspector<'a> = "WD01";
+//!         CLIENT_INSPECTOR_WD02: ClientInspector<'a> = "WD02";
+//!         LOADING_PLACEHOLDER: LoadingPlaceholder<'a> = "_loadingPlaceholder_";
 //!     }
 //!
 //!     // 애플리케이션의 생성자
-//!     pub async fn new() -> Result<Self, WebDynproError> {
-//!         WebDynproClient::new("https://ecc.ssu.ac.kr/sap/bc/webdynpro/SAP/", "ZCMW2100").await
+//!     pub async fn new() -> Result<ExampleApplication, WebDynproError> {
+//!         let client = reqwest::Client::builder()
+//!                 .user_agent(DEFAULT_USER_AGENT)
+//!                 .build()
+//!                 .unwrap();
+//!         let body = client.navigate(&base_url, name).await?;
+//!         let state = WebDynproState::new(base_url, name.to_string(), body);
+//!         let mut app = ExampleApplication { state, client };
+//!         app.load_placeholder().await?;
+//!         Ok(app)
 //!     }
 //!
 //!
@@ -53,6 +72,61 @@
 //!         let caption = parser.element_from_def(&Self::CAPTION)?;
 //!         // 캡션 엘리먼트로부터 텍스트를 반환
 //!         Ok(caption.text().to_string())
+//!     }
+//!
+//!     // 이벤트를 처리합니다.
+//!     pub async fn process_event(
+//!         &mut self,
+//!         force_send: bool,
+//!         event: Event,
+//!     ) -> Result<EventProcessResult, WebDynproError> {
+//!         let enqueue_result = self.state.add_event(event).await;
+//!
+//!         if (matches!(enqueue_result, EnqueueEventResult::ShouldProcess)) || force_send {
+//!             let serialized_events = self.state.serialize_and_clear_with_form_event().await?;
+//!             let update = {
+//!                 self.client
+//!                     .send_events(
+//!                         self.state.base_url(),
+//!                         self.state.body().ssr_client(),
+//!                         &serialized_events,
+//!                     )
+//!                     .await?
+//!             };
+//!             self.state.mutate_body(update)?;
+//!             Ok(EventProcessResult::Sent)
+//!         } else {
+//!             Ok(EventProcessResult::Enqueued)
+//!         }
+//!     }
+//!     
+//!     // 페이지 플레이스홀더 로드
+//!     async fn load_placeholder(&mut self) -> Result<(), WebDynproError> {
+//!         let parser = ElementParser::new(self.body());
+//!         let notify_wd01 = parser.read(ClientInspectorNotifyEventCommand::new(
+//!             Self::CLIENT_INSPECTOR_WD01,
+//!             INITIAL_CLIENT_DATA_WD01,
+//!         ))?;
+//!         let notify_wd02 = parser.read(ClientInspectorNotifyEventCommand::new(
+//!             Self::CLIENT_INSPECTOR_WD02,
+//!             INITIAL_CLIENT_DATA_WD02,
+//!         ))?;
+//!         let load = parser.read(LoadingPlaceholderLoadEventCommand::new(
+//!             Self::LOADING_PLACEHOLDER,
+//!         ))?;
+//!         let custom = parser.read(CustomClientInfoEventCommand::new(
+//!             Self::CUSTOM,
+//!             CustomClientInfo {
+//!                 client_url: self.client_url(),
+//!                 document_domain: "ssu.ac.kr".to_owned(),
+//!                 ..CustomClientInfo::default()
+//!             },
+//!         ))?;
+//!         self.process_event(false, notify_wd01).await?;
+//!         self.process_event(false, notify_wd02).await?;
+//!         self.process_event(false, load).await?;
+//!         self.process_event(false, custom).await?;
+//!         Ok(())
 //!     }
 //! }
 //!
@@ -73,11 +147,11 @@
 //! [`ClientInspector`]: element::system::ClientInspector
 //! [`Custom`]: element::system::Custom
 
-/// WebDynpro 페이지의 기본 클라이언트
-pub mod client;
 #[cfg(feature = "element")]
 /// WebDynpro 페이지를 구성하는 엘리먼트
 pub mod element;
+/// WebDynpro 페이지의 상태 관리 구조체
+pub mod state;
 
 #[cfg(feature = "element")]
 /// WebDynpro 클라이언트를 조작하는 명령
@@ -88,4 +162,10 @@ pub mod error;
 /// WebDynpro 엘리먼트가 발생시키는 이벤트 처리
 pub mod event;
 
-pub mod utils;
+/// WebDynpro의 페이지를 파싱, 업데이트하는 [`Body`] 구현
+pub mod body;
+
+/// reqwest를 사용한 WebDynpro 클라이언트의 HTTP 요청 기능
+pub mod requests;
+
+pub use scraper;

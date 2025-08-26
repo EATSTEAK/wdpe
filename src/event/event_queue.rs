@@ -1,35 +1,104 @@
-use super::{EVENT_SPECTATOR, Event};
-use std::collections::LinkedList;
+use crate::{
+    error::ClientError,
+    event::{EventBuilder, EventBuilderError, ucf_parameters::UcfParameters},
+};
 
+use super::{EVENT_SPECTATOR, Event};
+use std::collections::{HashMap, LinkedList};
+
+/// 이벤트가 추가된 후, [`EventQueue`]가 처리되어야 할 지를 나타내는 enum입니다.
+pub enum EnqueueEventResult {
+    /// [`EventQueue`]가 처리되어야 함을 나타냅니다. [`EventQueue::serialize_and_clear()`] 함수로 큐를 처리할 수 있습니다.
+    ShouldProcess,
+    /// [`EventQueue`]에 이벤트가 추가되었고, 별도의 작업이 필요하지 않음을 나타냅니다.
+    Enqueued,
+}
+
+/// 이벤트 큐를 관리하는 구조체
 #[derive(Debug)]
-pub(crate) struct EventQueue(LinkedList<Event>);
+pub struct EventQueue {
+    queue: LinkedList<Event>,
+    should_process: bool,
+}
 
 impl EventQueue {
+    /// 새로운 `EventQueue`를 생성합니다.
     pub fn new() -> EventQueue {
-        EventQueue(LinkedList::new())
+        EventQueue {
+            queue: LinkedList::new(),
+            should_process: false,
+        }
     }
 
+    /// 이벤트 큐의 내용을 Form 이벤트와 함께 직렬화하고 큐를 비웁니다.
+    pub fn serialize_and_clear_with_form_event(&mut self) -> Result<String, ClientError> {
+        let form_req = create_form_request_event(false, "", "", false, false).or(Err(
+            ClientError::NoSuchForm("sap.client.SsrClient.form".to_string()),
+        ))?;
+        self.add(form_req.to_owned());
+        Ok(self.serialize_and_clear())
+    }
+
+    /// 이벤트 큐의 내용을 직렬화하고 큐를 비웁니다.
     pub fn serialize_and_clear(&mut self) -> String {
         let mut owned = "".to_owned();
-        let events = &self.0;
+        let events = &self.queue;
         for (idx, event) in events.iter().enumerate() {
             owned.push_str(&event.serialize());
             if idx < events.len() - 1 {
                 owned.push_str(EVENT_SPECTATOR);
             }
         }
-        let _ = &self.0.clear();
+        let _ = &self.queue.clear();
         owned
     }
 
-    pub fn add(&mut self, evt: Event) {
-        self.0.push_back(evt)
+    /// 이벤트를 큐에 추가합니다.
+    pub fn add(&mut self, evt: Event) -> EnqueueEventResult {
+        if !evt.is_enqueable() && evt.is_submitable() {
+            self.should_process = true;
+        }
+        self.queue.push_back(evt);
+        if self.should_process {
+            EnqueueEventResult::ShouldProcess
+        } else {
+            EnqueueEventResult::Enqueued
+        }
     }
 
-    #[allow(unused)]
+    /// 이벤트를 큐에서 제거합니다.
     pub fn remove(&mut self) -> Option<Event> {
-        self.0.pop_front()
+        self.queue.pop_front()
     }
+}
+
+impl Default for EventQueue {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+fn create_form_request_event(
+    is_async: bool,
+    focus_info: &str,
+    hash: &str,
+    dom_changed: bool,
+    is_dirty: bool,
+) -> Result<Event, EventBuilderError> {
+    let mut form_parameters: HashMap<String, String> = HashMap::new();
+    form_parameters.insert("Id".to_string(), "sap.client.SsrClient.form".to_string());
+    form_parameters.insert("Async".to_string(), is_async.to_string());
+    form_parameters.insert("FocusInfo".to_string(), focus_info.to_string());
+    form_parameters.insert("Hash".to_string(), hash.to_string());
+    form_parameters.insert("DomChanged".to_string(), dom_changed.to_string());
+    form_parameters.insert("IsDirty".to_string(), is_dirty.to_string());
+    EventBuilder::default()
+        .control("Form".to_string())
+        .event("Request".to_string())
+        .parameters(form_parameters)
+        .ucf_parameters(UcfParameters::default())
+        .custom_parameters(HashMap::new())
+        .build()
 }
 
 #[cfg(test)]

@@ -12,14 +12,16 @@ readme = "README.md"
 [features]
 default = ["element"]
 element = ["dep:scraper"]
+reqwest = ["dep:reqwest"]
+ureq = ["dep:ureq"]
 
 [dependencies]
-custom_debug_derive = "0.6.2"
-derive_builder = "0.20.2"
-html-escape = "0.2.13"
+custom_debug_derive = "0.6"
+derive_builder = "0.20"
+html-escape = "0.2"
 lol_html = "2.6.0"
-regex-lite = "0.1.6"
-reqwest = { version = "0.12.22", features = [
+regex-lite = "0.1.7"
+reqwest = { version = "0.12", features = [
   "charset",
   "http2",
   "macos-system-configuration",
@@ -27,16 +29,17 @@ reqwest = { version = "0.12.22", features = [
   "cookies",
   "gzip",
   "brotli",
-], default-features = false }
-roxmltree = "0.20.0"
-scraper = { version = "0.23.1", features = ["atomic"], optional = true }
-serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.141"
-thiserror = "2.0.12"
-tokio = { version = "1.47.0", features = ["sync"] }
-tracing = "0.1.41"
-url = "2.5.4"
+], default-features = false, optional = true }
+roxmltree = "0.20"
+scraper = { version = "0.24", features = ["atomic"], optional = true }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["sync"] }
+tracing = "0.1"
+url = "2.5.7"
+ureq = { version = "3.1.0", optional = true }
 
 [dev-dependencies]
 tokio-test = "0.4.4"
-tokio = { version = "1.47.0", features = ["full"] }
+tokio = { version = "1", features = ["full"] }

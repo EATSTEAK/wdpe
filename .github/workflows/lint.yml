@@ -18,4 +18,4 @@ jobs:
       - name: Check rustfmt
         run: cargo fmt --check
       - name: Check clippy
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --all-targets --all-features -- -D warnings

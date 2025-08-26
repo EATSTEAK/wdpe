@@ -46,13 +46,13 @@ impl From<ElementError> for WebDynproError {
 pub enum ClientError {
     /// 웹 리퀘스트에 실패
     #[error("Failed to request from web")]
-    FailedRequest(#[from] reqwest::Error),
+    FailedRequest(String),
     /// HTML 문서를 파싱하지 못함
     #[error("Failed to parse HTML body")]
     Parse(#[from] BodyError),
     /// 웹 리퀘스트는 성공하였으나, 응답이 올바르지 않음
     #[error("Request is made, but failed")]
-    InvalidResponse(Box<reqwest::Response>),
+    InvalidResponse(String),
     /// 클라이언트에서 사용하는 Base URL 파싱 실패
     #[error("Failed to parse base url")]
     ParseBaseUrl(#[from] url::ParseError),
@@ -71,6 +71,9 @@ pub enum ClientError {
     /// 주어진 Url에 대해 어떤 쿠키도 찾을 수 없음
     #[error("Empty cookie store for given url: {0}")]
     NoCookies(String),
+    /// 네트워크 요청 오류
+    #[error("Network error: {0}")]
+    NetworkError(String),
 }
 
 /// WebDynpro 문서 업데이트 중 발생하는 오류의 이늄
