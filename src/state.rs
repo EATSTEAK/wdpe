@@ -119,6 +119,25 @@ pub struct SapSsrClient {
     pub use_beacon: bool,
 }
 
+impl SapSsrClient {
+    pub fn build_action_url(&self, base_url: &Url) -> Result<String, ClientError> {
+        let mut url = "".to_owned();
+        url.push_str(base_url.scheme());
+        url.push_str("://");
+        if let Some(host_str) = base_url.host_str() {
+            url.push_str(host_str);
+        } else {
+            return Err(ClientError::InvalidBaseUrl(base_url.to_string()))?;
+        }
+        if let Some(port) = base_url.port() {
+            url.push(':');
+            url.push_str(port.to_string().as_str());
+        }
+        url.push_str(self.action.as_str());
+        Ok(url)
+    }
+}
+
 /// 전달받은 이벤트가 어떻게 처리되었는지 표현합니다.
 pub enum EventProcessResult {
     /// 전달받은 이벤트가 큐에 추가되었을 경우
