@@ -17,6 +17,16 @@ pub struct WebDynproState {
 }
 
 impl WebDynproState {
+    /// 새로운 `WebDynproState`를 생성합니다.
+    pub fn new(base_url: Url, name: String, body: Body) -> Self {
+        WebDynproState {
+            base_url,
+            name,
+            body,
+            event_queue: Mutex::new(EventQueue::new()),
+        }
+    }
+
     /// WebDynpro 애플리케이션의 이름을 반환합니다.
     pub fn name(&self) -> &str {
         &self.name
@@ -65,47 +75,6 @@ impl WebDynproState {
             .lock()
             .await
             .serialize_and_clear_with_form_event()
-    }
-}
-
-/// [`WebDynproState`]를 생성하는 빌더
-pub struct WebDynproStateBuilder<'a> {
-    base_url: &'a str,
-    name: &'a str,
-    body: Option<String>,
-}
-
-impl<'a> WebDynproStateBuilder<'a> {
-    /// 새로운 [`WebDynproStateBuilder`]를 만듭니다.
-    pub fn new(base_url: &'a str, name: &'a str) -> WebDynproStateBuilder<'a> {
-        WebDynproStateBuilder {
-            base_url,
-            name,
-            body: None,
-        }
-    }
-
-    /// 초기 Body HTML 문자열을 설정합니다.
-    pub fn body(mut self, body: String) -> WebDynproStateBuilder<'a> {
-        self.body = Some(body);
-        self
-    }
-
-    /// 새로운 [`WebDynproState`]를 생성합니다.
-    pub fn build(self) -> Result<WebDynproState, WebDynproError> {
-        let base_url = Url::parse(self.base_url)
-            .or(Err(ClientError::InvalidBaseUrl(self.base_url.to_string())))?;
-
-        let body_str = self
-            .body
-            .ok_or_else(|| ClientError::NoSuchForm("Initial body not provided".to_string()))?;
-
-        Ok(WebDynproState {
-            base_url,
-            name: self.name.to_owned(),
-            body: Body::new(body_str)?,
-            event_queue: Mutex::new(EventQueue::new()),
-        })
     }
 }
 
