@@ -11,15 +11,18 @@ type BodyUpdateWindowId = String;
 type BodyUpdateContentId = String;
 type BodyUpdateControlId = String;
 
+/// 바디 업데이트 유형 구조체
 #[derive(Debug)]
-pub(super) enum BodyUpdateType {
-    #[allow(dead_code)]
+pub enum BodyUpdateType {
+    /// 제공된 BodyUpdate가 페이지 전체를 업데이트 할 경우
     Full(BodyUpdateWindowId, BodyUpdateContentId, String),
+    /// 제공된 BodyUpdate가 일부 컨트롤만 업데이트 할 경우
     Delta(BodyUpdateWindowId, HashMap<BodyUpdateControlId, String>),
 }
 
+/// [`Body`]를 업데이트 하기 위한 데이터 구조체
 #[derive(Debug)]
-#[allow(unused)]
+#[allow(dead_code)]
 pub struct BodyUpdate {
     update: Option<BodyUpdateType>,
     initialize_ids: Option<String>,
@@ -29,6 +32,7 @@ pub struct BodyUpdate {
 }
 
 impl BodyUpdate {
+    /// 새로운 `BodyUpdate`를 생성합니다.
     pub fn new(response: &str) -> Result<BodyUpdate, UpdateBodyError> {
         let response_xml = roxmltree::Document::parse(response)?;
         let updates = response_xml
@@ -139,10 +143,11 @@ impl Hash for Body {
 }
 
 impl Body {
-    pub(crate) fn new(body: String) -> Result<Body, BodyError> {
-        let sap_ssr_client = parse_sap_ssr_client(&body)?;
+    /// 새로운 `Body`를 Raw HTML 문자열으로 부터 생성합니다.
+    pub fn new(raw_body: String) -> Result<Body, BodyError> {
+        let sap_ssr_client = parse_sap_ssr_client(&raw_body)?;
         Ok(Body {
-            raw_body: body,
+            raw_body,
             sap_ssr_client,
         })
     }
