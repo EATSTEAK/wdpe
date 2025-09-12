@@ -45,19 +45,19 @@ impl From<ElementError> for WebDynproError {
 #[derive(Error, Debug)]
 pub enum ClientError {
     /// 웹 리퀘스트에 실패
-    #[error("Failed to request from web")]
+    #[error("Failed to request from web: {0}")]
     FailedRequest(String),
     /// HTML 문서를 파싱하지 못함
-    #[error("Failed to parse HTML body")]
+    #[error("Failed to parse HTML body: {0}")]
     Parse(#[from] BodyError),
     /// 웹 리퀘스트는 성공하였으나, 응답이 올바르지 않음
-    #[error("Request is made, but failed")]
+    #[error("Request is made, but failed: {0}")]
     InvalidResponse(String),
     /// 클라이언트에서 사용하는 Base URL 파싱 실패
-    #[error("Failed to parse base url")]
+    #[error("Failed to parse base url: {0}")]
     ParseBaseUrl(#[from] url::ParseError),
     /// WebDynpro 문서 업데이트 응답이 올바르지 않음
-    #[error("Server's update response is invalid")]
+    #[error("Server's update response is invalid: {0}")]
     InvalidUpdate(#[from] UpdateBodyError),
     /// Base URL이 올바르지 않음
     #[error("Given base url is not valid: {0}")]
