@@ -28,6 +28,7 @@ pub trait WebDynproRequests {
     ) -> impl std::future::Future<Output = Result<BodyUpdate, ClientError>> + Send;
 }
 
+#[cfg(any(feature = "reqwest", feature = "ureq"))]
 fn build_navigation_url(base_url: &Url, name: &str) -> String {
     let mut url = base_url.to_string();
     if !url.ends_with('/') {
