@@ -50,7 +50,7 @@ pub struct CaptionLSData {
 #[doc = "[`Tray`]: crate::element::layout::Tray"]
 #[derive(WdElement)]
 #[wd_element(control_id = "CP", element_name = "Caption")]
-#[wd_element(interactable)]
+#[wd_element(interactable, textisable)]
 #[wd_element(def = "CaptionDef", def_doc = "[`Caption`]의 정의")]
 #[wd_element(lsdata = "CaptionLSData")]
 pub struct Caption<'a> {

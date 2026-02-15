@@ -33,7 +33,7 @@ pub struct TextViewLSData {
 #[doc = "텍스트 표시 뷰"]
 #[derive(WdElement)]
 #[wd_element(control_id = "TV", element_name = "TextView")]
-#[wd_element(interactable)]
+#[wd_element(interactable, textisable)]
 #[wd_element(def = "TextViewDef", def_doc = "[`TextView`]의 정의")]
 #[wd_element(lsdata = "TextViewLSData")]
 pub struct TextView<'a> {

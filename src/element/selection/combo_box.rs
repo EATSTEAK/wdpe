@@ -100,7 +100,7 @@ pub struct ComboBoxLSData {
 #[doc = "목록 혹은 직접 입력하여 선택할 수 있는 콤보 박스"]
 #[derive(WdElement)]
 #[wd_element(control_id = "CB", element_name = "ComboBox")]
-#[wd_element(interactable)]
+#[wd_element(interactable, textisable)]
 #[wd_element(def = "ComboBoxDef", def_doc = "[`ComboBox`]의 정의")]
 #[wd_element(lsdata = "ComboBoxLSData")]
 pub struct ComboBox<'a> {

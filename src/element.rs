@@ -381,20 +381,18 @@ impl ElementWrapper<'_> {
 impl TryFrom<&ElementWrapper<'_>> for String {
     type Error = WebDynproError;
 
-    fn try_from(value: &ElementWrapper<'_>) -> Result<Self, Self::Error> {
-        match value {
-            ElementWrapper::TextView(tv) => Ok(tv.to_string()),
-            ElementWrapper::Caption(cp) => Ok(cp.to_string()),
-            ElementWrapper::CheckBox(c) => Ok(c.to_string()),
-            ElementWrapper::ComboBox(cb) => Ok(cb.to_string()),
-            ElementWrapper::InputField(ifield) => Ok(ifield.to_string()),
-            ElementWrapper::Link(link) => Ok(link.to_string()),
-            _ => Err(ElementError::InvalidContent {
-                element: value.id().to_string(),
-                content: "This element is cannot be textised.".to_string(),
+    fn try_from(wrapper: &ElementWrapper<'_>) -> Result<Self, Self::Error> {
+        for reg in inventory::iter::<crate::element::registry::TextisableRegistration> {
+            if let Some(s) = (reg.to_string_fn)(wrapper) {
+                return Ok(s);
             }
-            .into()),
         }
+
+        Err(ElementError::InvalidContent {
+            element: wrapper.id().to_string(),
+            content: "This element cannot be textised.".to_string(),
+        }
+        .into())
     }
 }
 

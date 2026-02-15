@@ -41,7 +41,7 @@ pub struct LinkLSData {
 #[doc = "액션을 수행하거나 링크로 이동하는 하이퍼링크"]
 #[derive(WdElement)]
 #[wd_element(control_id = "LN", element_name = "Link")]
-#[wd_element(interactable)]
+#[wd_element(interactable, textisable)]
 #[wd_element(def = "LinkDef", def_doc = "[`Link`]의 정의")]
 #[wd_element(lsdata = "LinkLSData")]
 pub struct Link<'a> {

@@ -84,7 +84,7 @@ pub struct InputFieldLSData {
 #[doc = "입력 필드"]
 #[derive(WdElement)]
 #[wd_element(control_id = "I", element_name = "InputField")]
-#[wd_element(interactable)]
+#[wd_element(interactable, textisable)]
 #[wd_element(def = "InputFieldDef", def_doc = "[`InputField`]의 정의")]
 #[wd_element(lsdata = "InputFieldLSData")]
 pub struct InputField<'a> {

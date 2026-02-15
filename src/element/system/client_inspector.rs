@@ -221,6 +221,19 @@ impl<'a> Interactable<'a> for ClientInspector<'a> {
     }
 }
 
+inventory::submit! {
+    crate::element::registry::ElementRegistration::new(
+        "CI",
+        "ClientInspector",
+        |id, element_ref| {
+            use crate::element::Element;
+            use crate::element::definition::ElementDefinition;
+            let def = ClientInspectorDef::new_dynamic(id);
+            Ok(ClientInspector::from_ref(&def, element_ref)?.wrap())
+        },
+    )
+}
+
 impl<'a> ClientInspector<'a> {
     /// HTML 엘리먼트로 [`ClientInspector`] 엘리먼트를 생성합니다.
     pub const fn new(id: Cow<'static, str>, element_ref: scraper::ElementRef<'a>) -> Self {

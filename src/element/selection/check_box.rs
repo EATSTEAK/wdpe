@@ -53,7 +53,7 @@ pub struct CheckBoxLSData {
 #[doc = "체크박스"]
 #[derive(WdElement)]
 #[wd_element(control_id = "C_standards", element_name = "CheckBox")]
-#[wd_element(interactable)]
+#[wd_element(interactable, textisable)]
 #[wd_element(def = "CheckBoxDef", def_doc = "[`CheckBox`]의 정의")]
 #[wd_element(lsdata = "CheckBoxLSData")]
 pub struct CheckBox<'a> {
