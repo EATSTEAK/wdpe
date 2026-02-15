@@ -40,9 +40,6 @@ pub mod definition;
 /// [`ElementParser`]의 모듈
 pub mod parser;
 
-/// 엘리먼트 생성에 사용되는 메크로
-pub mod macros;
-
 /// 버튼 등 기본적인 액션에 이용되는 엘리먼트
 pub mod action;
 /// 복잡한 데이터를 표현하는 엘리먼트

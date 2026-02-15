@@ -5,9 +5,6 @@ use scraper::ElementRef;
 /// [`SubElement`](SubElement)의 정의에 관련된 모듈
 pub mod definition;
 
-/// SubElement 생성에 관련된 매크로 모듈
-pub mod macros;
-
 /// 서브 엘리먼트의 기능
 pub trait SubElement<'a>: Sized {
     /// WebDynpro 내부에서 사용하는 서브 엘리먼트의 Id
