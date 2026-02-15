@@ -114,7 +114,7 @@ impl<'a> SapTableRow {
     /// 행을 [`FromSapTable`]을 구현하는 형으로 변환합니다.
     pub fn try_row_into<T: FromSapTable<'a>>(
         &'a self,
-        header: &'a SapTableHeader,
+        header: Option<&'a SapTableHeader>,
         parser: &'a ElementParser,
     ) -> Result<T, WebDynproError> {
         T::from_table(header, self, parser)

@@ -17,7 +17,7 @@ use crate::{
 #[allow(unused)]
 pub struct SapTableBody {
     table_def: SapTableDef,
-    header: SapTableHeader,
+    header: Option<SapTableHeader>,
     rows: Vec<SapTableRow>,
 }
 
@@ -31,13 +31,8 @@ impl<'a> SapTableBody {
         let mut header_iter = ref_iter
             .clone()
             .filter_map(|row_ref| SapTableHeader::new(table_def.clone(), row_ref).ok());
-        let Some(header) = header_iter.next() else {
-            return Err(ElementError::NoSuchContent {
-                element: table_def.id().to_owned(),
-                content: "Header of table".to_owned(),
-            });
-        };
-        if header_iter.next().is_some() {
+        let header = header_iter.next();
+        if header.is_some() && header_iter.next().is_some() {
             return Err(ElementError::InvalidContent {
                 element: table_def.id().to_owned(),
                 content: "Multiple header in table".to_owned(),
@@ -112,6 +107,7 @@ impl<'a> SapTableBody {
                         (spanned_cell.0.clone(), spanned_cell.1 - 1, spanned_cell.2),
                     );
                 }
+                #[allow(unused_assignments)]
                 for _ in 0..spanned_cell.2 {
                     col_counter += 1;
                     cells.push(spanned_cell.0.clone());
@@ -145,10 +141,13 @@ impl<'a> SapTableBody {
     }
 
     /// 내부 행에 헤더 행을 포함한 튜플의 Iterator를 반환합니다.
+    ///
+    /// 헤더가 없는 경우 `None`을 반환합니다.
     pub fn zip_header(
         &'a self,
-    ) -> impl ExactSizeIterator<Item = (&'a SapTableHeader, &'a SapTableRow)> {
-        self.rows.iter().map(|row| (self.header(), row))
+    ) -> Option<impl ExactSizeIterator<Item = (&'a SapTableHeader, &'a SapTableRow)>> {
+        let header = self.header.as_ref()?;
+        Some(self.rows.iter().map(move |row| (header, row)))
     }
 
     /// 이 테이블의 원본 [`SapTableDef`]를 반환합니다.
@@ -157,8 +156,8 @@ impl<'a> SapTableBody {
     }
 
     /// 헤더 행을 반환합니다.
-    pub fn header(&self) -> &SapTableHeader {
-        &self.header
+    pub fn header(&self) -> Option<&SapTableHeader> {
+        self.header.as_ref()
     }
 
     /// 테이블을 [`FromSapTable`]을 구현하는 형의 [`Vec`]으로 변환합니다.
@@ -166,8 +165,9 @@ impl<'a> SapTableBody {
         &'a self,
         parser: &'a ElementParser,
     ) -> Result<Vec<T>, WebDynproError> {
+        let header = self.header.as_ref();
         self.iter()
-            .map(|row| T::from_table(self.header(), row, parser))
+            .map(|row| T::from_table(header, row, parser))
             .collect::<Result<Vec<T>, WebDynproError>>()
     }
 }
