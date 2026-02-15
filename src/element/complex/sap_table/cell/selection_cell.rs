@@ -2,35 +2,52 @@ use std::{borrow::Cow, cell::OnceCell};
 
 use scraper::Selector;
 
-use crate::element::{
-    ElementDefWrapper,
-    complex::{
-        SapTable,
-        sap_table::{SapTableDef, property::SapTableCellType},
-    },
-    sub::macros::define_subelement,
+use crate::{
+    WdLsData, WdSubElement,
+    element::{ElementDefWrapper, complex::sap_table::property::SapTableCellType},
 };
 
 use super::{SapTableCell, SapTableCellWrapper};
 
-define_subelement! {
-    #[doc = "선택 가능한 [`SapTable`]의 셀"]
-    SapTableSelectionCell<SapTable, SapTableDef, "SC", "SapTableSelectionCell"> {
-        content: OnceCell<Option<ElementDefWrapper<'a>>>,
-    },
-    #[doc = "[`SapTableSelectionCell`]의 정의"]
-    SapTableSelectionCellDef,
-    #[doc = "[`SapTableSelectionCell`] 내부 데이터"]
-    SapTableSelectionCellLSData {
-        is_selected: bool => "0",
-        is_secondary_selected: bool => "1",
-        enabled: bool => "2",
-        cell_type: SapTableCellType => "3",
-        row_description: String => "4",
-        is_deselectable: bool => "5",
-        tooltip: String => "6",
-        custom_data: String => "7",
-    }
+#[doc = "[`SapTableSelectionCell`] 내부 데이터"]
+#[derive(WdLsData)]
+#[allow(unused)]
+pub struct SapTableSelectionCellLSData {
+    #[wd_lsdata(index = "0")]
+    is_selected: Option<bool>,
+    #[wd_lsdata(index = "1")]
+    is_secondary_selected: Option<bool>,
+    #[wd_lsdata(index = "2")]
+    enabled: Option<bool>,
+    #[wd_lsdata(index = "3")]
+    cell_type: Option<SapTableCellType>,
+    #[wd_lsdata(index = "4")]
+    row_description: Option<String>,
+    #[wd_lsdata(index = "5")]
+    is_deselectable: Option<bool>,
+    #[wd_lsdata(index = "6")]
+    tooltip: Option<String>,
+    #[wd_lsdata(index = "7")]
+    custom_data: Option<String>,
+}
+
+#[doc = "선택 가능한 [`SapTable`](crate::element::complex::SapTable)의 셀"]
+#[derive(WdSubElement, custom_debug_derive::Debug)]
+#[wd_element(parent = "SapTable", parent_def = "SapTableDef")]
+#[wd_element(subcontrol_id = "SC", element_name = "SapTableSelectionCell")]
+#[wd_element(
+    def = "SapTableSelectionCellDef",
+    def_doc = "[`SapTableSelectionCell`]의 정의"
+)]
+#[wd_element(lsdata = "SapTableSelectionCellLSData")]
+pub struct SapTableSelectionCell<'a> {
+    id: Cow<'static, str>,
+    #[wd_element(element_ref)]
+    #[debug(skip)]
+    element_ref: scraper::ElementRef<'a>,
+    #[wd_element(lsdata_field)]
+    lsdata: OnceCell<SapTableSelectionCellLSData>,
+    content: OnceCell<Option<ElementDefWrapper<'a>>>,
 }
 
 impl<'a> SapTableCell<'a> for SapTableSelectionCell<'a> {
@@ -51,18 +68,10 @@ impl<'a> SapTableCell<'a> for SapTableSelectionCell<'a> {
 }
 
 impl<'a> SapTableSelectionCell<'a> {
-    /// HTML 엘리먼트로부터 [`SapTableSelectionCell`]을 생성합니다.
-    pub const fn new(id: Cow<'static, str>, element_ref: scraper::ElementRef<'a>) -> Self {
-        Self {
-            id,
-            element_ref,
-            lsdata: OnceCell::new(),
-            content: OnceCell::new(),
-        }
-    }
-
     /// 셀을 [`SapTableCellWrapper`]로 감쌉니다.
     pub fn wrap(self) -> SapTableCellWrapper<'a> {
         SapTableCellWrapper::Selection(self)
     }
 }
+
+use crate::element::complex::{SapTable, SapTableDef};

@@ -79,7 +79,7 @@ fn derive_wd_lsdata_inner(input: TokenStream) -> Result<TokenStream> {
             .as_ref()
             .ok_or_else(|| Error::new_spanned(field, "WdLsData fields must be named"))?;
         let field_type = &field.ty;
-        let field_vis = &field.vis;
+        let _field_vis = &field.vis;
 
         // Extract #[wd_lsdata(index = "N")]
         let index_value = extract_wd_lsdata_index(&field.attrs)?.ok_or_else(|| {
@@ -139,7 +139,7 @@ fn derive_wd_lsdata_inner(input: TokenStream) -> Result<TokenStream> {
         let accessor = if let Some(inner_ty) = inner_type {
             quote! {
                 #(#field_other_attrs)*
-                #field_vis fn #field_name(&self) -> Option<&#inner_ty> {
+                pub fn #field_name(&self) -> Option<&#inner_ty> {
                     self.#field_name.as_ref()
                 }
             }
@@ -147,7 +147,7 @@ fn derive_wd_lsdata_inner(input: TokenStream) -> Result<TokenStream> {
             // If not Option<T>, return a reference directly
             quote! {
                 #(#field_other_attrs)*
-                #field_vis fn #field_name(&self) -> &#field_type {
+                pub fn #field_name(&self) -> &#field_type {
                     &self.#field_name
                 }
             }

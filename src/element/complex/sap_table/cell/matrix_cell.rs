@@ -2,31 +2,44 @@ use std::{borrow::Cow, cell::OnceCell};
 
 use scraper::Selector;
 
-use crate::element::{
-    ElementDefWrapper,
-    complex::{
-        SapTable,
-        sap_table::{SapTableDef, property::SapTableCellDesign},
-    },
-    sub::macros::define_subelement,
+use crate::{
+    WdLsData, WdSubElement,
+    element::{ElementDefWrapper, complex::sap_table::property::SapTableCellDesign},
 };
 
 use super::{SapTableCell, SapTableCellWrapper};
 
-define_subelement! {
-    #[doc = "매트릭스 형태의 [`SapTable`] 셀"]
-    SapTableMatrixCell<SapTable, SapTableDef, "MC", "SapTableMatrixCell"> {
-        content: OnceCell<Option<ElementDefWrapper<'a>>>,
-    },
-    #[doc = "[`SapTableMatrixCell`]의 정의"]
-    SapTableMatrixCellDef,
-    #[doc = "[`SapTableMatrixCell`] 내부 데이터"]
-    SapTableMatrixCellLSData {
-        cell_background_design: SapTableCellDesign => "0",
-        header_cell_ids: String => "1",
-        row_header_cell_ids: String => "2",
-        custom_data: String => "3",
-    }
+#[doc = "[`SapTableMatrixCell`] 내부 데이터"]
+#[derive(WdLsData)]
+#[allow(unused)]
+pub struct SapTableMatrixCellLSData {
+    #[wd_lsdata(index = "0")]
+    cell_background_design: Option<SapTableCellDesign>,
+    #[wd_lsdata(index = "1")]
+    header_cell_ids: Option<String>,
+    #[wd_lsdata(index = "2")]
+    row_header_cell_ids: Option<String>,
+    #[wd_lsdata(index = "3")]
+    custom_data: Option<String>,
+}
+
+#[doc = "매트릭스 형태의 [`SapTable`](crate::element::complex::SapTable) 셀"]
+#[derive(WdSubElement, custom_debug_derive::Debug)]
+#[wd_element(parent = "SapTable", parent_def = "SapTableDef")]
+#[wd_element(subcontrol_id = "MC", element_name = "SapTableMatrixCell")]
+#[wd_element(
+    def = "SapTableMatrixCellDef",
+    def_doc = "[`SapTableMatrixCell`]의 정의"
+)]
+#[wd_element(lsdata = "SapTableMatrixCellLSData")]
+pub struct SapTableMatrixCell<'a> {
+    id: Cow<'static, str>,
+    #[wd_element(element_ref)]
+    #[debug(skip)]
+    element_ref: scraper::ElementRef<'a>,
+    #[wd_element(lsdata_field)]
+    lsdata: OnceCell<SapTableMatrixCellLSData>,
+    content: OnceCell<Option<ElementDefWrapper<'a>>>,
 }
 
 impl<'a> SapTableCell<'a> for SapTableMatrixCell<'a> {
@@ -47,18 +60,10 @@ impl<'a> SapTableCell<'a> for SapTableMatrixCell<'a> {
 }
 
 impl<'a> SapTableMatrixCell<'a> {
-    /// HTML 엘리먼트로부터 [`SapTableMatrixCell`]을 생성합니다.
-    pub const fn new(id: Cow<'static, str>, element_ref: scraper::ElementRef<'a>) -> Self {
-        Self {
-            id,
-            element_ref,
-            lsdata: OnceCell::new(),
-            content: OnceCell::new(),
-        }
-    }
-
     /// 셀을 [`SapTableCellWrapper`]로 감쌉니다.
     pub fn wrap(self) -> SapTableCellWrapper<'a> {
         SapTableCellWrapper::Matrix(self)
     }
 }
+
+use crate::element::complex::{SapTable, SapTableDef};

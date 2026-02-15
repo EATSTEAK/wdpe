@@ -1,3 +1,4 @@
+#[allow(unused_macros)]
 macro_rules! define_subelement {
   {   $(#[$outer:meta])*
       $name:ident<$parent:ident, $parent_def:ty, $controlid:literal, $element_name:literal> {
@@ -124,4 +125,5 @@ macro_rules! define_subelement {
   };
 }
 
+#[allow(unused_imports)]
 pub(crate) use define_subelement;

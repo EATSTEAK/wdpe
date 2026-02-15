@@ -110,6 +110,7 @@ fn wd_event_inner(attr: TokenStream, item: TokenStream) -> Result<TokenStream> {
             &self,
             #(#fn_params,)*
         ) -> Result<crate::event::Event, crate::error::WebDynproError> {
+            use crate::element::Interactable as _;
             let mut parameters: std::collections::HashMap<String, String> =
                 std::collections::HashMap::new();
             parameters.insert("Id".to_string(), self.id.clone().to_string());

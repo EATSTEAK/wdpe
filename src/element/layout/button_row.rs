@@ -1,36 +1,36 @@
 use scraper::Selector;
 use std::{borrow::Cow, cell::OnceCell};
 
-use crate::element::{
-    Element, action::Button, definition::ElementDefinition, macros::define_element_base,
-    property::Visibility,
+use crate::{
+    WdElement, WdLsData,
+    element::{Element, action::Button, definition::ElementDefinition, property::Visibility},
 };
 
-define_element_base! {
-    #[doc = "[`Button`]의 나열"]
-    ButtonRow<"BR", "ButtonRow"> {
-        buttons: OnceCell<Vec<<Button<'a> as Element<'a>>::Def>>
-    },
-    #[doc = "[`ButtonRow`]의 정의"]
-    ButtonRowDef,
-    #[doc = "[`ButtonRow`] 내부 데이터"]
-    ButtonRowLSData {
-        visibility: Visibility => "0",
-        custom_data: String => "1"
-    }
+#[doc = "[`ButtonRow`] 내부 데이터"]
+#[derive(WdLsData)]
+#[allow(unused)]
+pub struct ButtonRowLSData {
+    #[wd_lsdata(index = "0")]
+    visibility: Option<Visibility>,
+    #[wd_lsdata(index = "1")]
+    custom_data: Option<String>,
+}
+
+#[doc = "[`Button`]의 나열"]
+#[derive(WdElement)]
+#[wd_element(control_id = "BR", element_name = "ButtonRow")]
+#[wd_element(def = "ButtonRowDef", def_doc = "[`ButtonRow`]의 정의")]
+#[wd_element(lsdata = "ButtonRowLSData")]
+pub struct ButtonRow<'a> {
+    id: Cow<'static, str>,
+    #[wd_element(element_ref)]
+    element_ref: scraper::ElementRef<'a>,
+    #[wd_element(lsdata_field)]
+    lsdata: OnceCell<ButtonRowLSData>,
+    buttons: OnceCell<Vec<<Button<'a> as Element<'a>>::Def>>,
 }
 
 impl<'a> ButtonRow<'a> {
-    /// HTML 엘리먼트로부터 새로운 [`ButtonRow`] 엘리먼트를 생성합니다.
-    pub fn new(id: Cow<'static, str>, element_ref: scraper::ElementRef<'a>) -> Self {
-        Self {
-            id,
-            element_ref,
-            lsdata: OnceCell::new(),
-            buttons: OnceCell::new(),
-        }
-    }
-
     /// 내부 [`Button`]을 반환합니다.
     pub fn buttons(
         &'a self,

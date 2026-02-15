@@ -322,6 +322,7 @@ fn derive_wd_element_inner(input: TokenStream) -> Result<TokenStream> {
                     #element_name_str,
                     |id, element_ref| {
                         use crate::element::Element as _;
+                        use crate::element::definition::ElementDefinition as _;
                         let def = #def_name::new_dynamic(id);
                         Ok(#struct_name::from_ref(&def, element_ref)?.wrap())
                     },
@@ -369,10 +370,11 @@ fn derive_wd_element_inner(input: TokenStream) -> Result<TokenStream> {
         .collect();
 
     let default_assertions = if !custom_field_type_assertions.is_empty() {
+        let lt = lifetime.as_ref().unwrap();
         quote! {
             const _: () = {
                 fn _assert_default<T: Default>() {}
-                fn _check() {
+                fn _check<#lt>() {
                     #(#custom_field_type_assertions)*
                 }
             };

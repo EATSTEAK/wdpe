@@ -1,3 +1,4 @@
+#[allow(unused_macros)]
 macro_rules! define_lsdata {
     {   $(#[$lsdata_outer:meta])*
         $lsdata:ident {
@@ -29,6 +30,7 @@ macro_rules! define_lsdata {
     }
 }
 
+#[allow(unused_macros)]
 macro_rules! define_element_base {
     {   $(#[$outer:meta])*
         $name:ident<$controlid:literal, $element_name:literal> {
@@ -152,6 +154,7 @@ macro_rules! define_element_base {
     };
 }
 
+#[allow(unused_macros)]
 macro_rules! define_element_interactable {
     {
         $(#[$outer:meta])*
@@ -198,6 +201,9 @@ macro_rules! define_element_interactable {
     }
 }
 
+#[allow(unused_imports)]
 pub(crate) use define_element_base;
+#[allow(unused_imports)]
 pub(crate) use define_element_interactable;
+#[allow(unused_imports)]
 pub(crate) use define_lsdata;

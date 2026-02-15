@@ -1,31 +1,36 @@
 use std::{borrow::Cow, cell::OnceCell};
 
-use crate::element::macros::define_element_interactable;
+use crate::{WdElement, WdLsData};
 
 // TODO: Implement additional events and data
-define_element_interactable! {
-    #[doc = "[`GridLayout`](crate::element::layout::GridLayout) 내부 셀"]
-    GridLayoutCell<"GLC", "GridLayoutCell"> {},
-    #[doc = "[`GridLayoutCell`]의 정의"]
-    GridLayoutCellDef,
-    #[doc = "[`GridLayoutCell`] 내부 데이터"]
-    GridLayoutCellLSData {
-        drag_data: String => "0",
-        semantic_color: String => "1",
-        custom_data: String => "2",
-        layout_cell_position: String => "3",
-        custom_style: String => "4",
-    }
+#[doc = "[`GridLayoutCell`] 내부 데이터"]
+#[derive(WdLsData)]
+#[allow(unused)]
+pub struct GridLayoutCellLSData {
+    #[wd_lsdata(index = "0")]
+    drag_data: Option<String>,
+    #[wd_lsdata(index = "1")]
+    semantic_color: Option<String>,
+    #[wd_lsdata(index = "2")]
+    custom_data: Option<String>,
+    #[wd_lsdata(index = "3")]
+    layout_cell_position: Option<String>,
+    #[wd_lsdata(index = "4")]
+    custom_style: Option<String>,
 }
 
-impl<'a> GridLayoutCell<'a> {
-    /// HTML 엘리먼트로부터 새로운 [`GridLayoutCell`] 엘리먼트를 생성합니다.
-    pub const fn new(id: Cow<'static, str>, element_ref: scraper::ElementRef<'a>) -> Self {
-        Self {
-            id,
-            element_ref,
-            lsdata: OnceCell::new(),
-            lsevents: OnceCell::new(),
-        }
-    }
+#[doc = "[`GridLayout`](crate::element::layout::GridLayout) 내부 셀"]
+#[derive(WdElement)]
+#[wd_element(control_id = "GLC", element_name = "GridLayoutCell")]
+#[wd_element(interactable)]
+#[wd_element(def = "GridLayoutCellDef", def_doc = "[`GridLayoutCell`]의 정의")]
+#[wd_element(lsdata = "GridLayoutCellLSData")]
+pub struct GridLayoutCell<'a> {
+    id: Cow<'static, str>,
+    #[wd_element(element_ref)]
+    element_ref: scraper::ElementRef<'a>,
+    #[wd_element(lsdata_field)]
+    lsdata: OnceCell<GridLayoutCellLSData>,
+    #[wd_element(lsevents_field)]
+    lsevents: OnceCell<Option<crate::element::EventParameterMap>>,
 }
