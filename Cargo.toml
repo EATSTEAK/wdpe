@@ -1,3 +1,6 @@
+[workspace]
+members = [".", "wdpe-macros"]
+
 [package]
 name = "wdpe"
 version = "0.3.1"
@@ -16,6 +19,8 @@ reqwest = ["dep:reqwest"]
 ureq = ["dep:ureq"]
 
 [dependencies]
+inventory = "0.3"
+wdpe-macros = { path = "wdpe-macros" }
 custom_debug_derive = "0.6"
 derive_builder = "0.20"
 html-escape = "0.2"

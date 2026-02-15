@@ -841,6 +841,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "inventory"
+version = "0.3.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc61209c082fbeb19919bee74b176221b27223e27b65d781eb91af24eb1fb46e"
+dependencies = [
+ "rustversion",
+]
+
+[[package]]
 name = "ipnet"
 version = "2.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2193,6 +2202,7 @@ dependencies = [
  "custom_debug_derive",
  "derive_builder",
  "html-escape",
+ "inventory",
  "lol_html",
  "regex-lite",
  "reqwest",
@@ -2206,6 +2216,16 @@ dependencies = [
  "tracing",
  "ureq",
  "url",
+ "wdpe-macros",
+]
+
+[[package]]
+name = "wdpe-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

@@ -63,6 +63,9 @@ pub mod unknown;
 /// 엘리먼트에서 사용되는 프로퍼티
 pub mod property;
 
+/// 엘리먼트 등록 인프라 (inventory 기반)
+pub mod registry;
+
 /// 엘리먼트에서 발생시킬 수 있는 이벤트의 기본 파라메터
 pub type EventParameterMap = HashMap<String, (UcfParameters, HashMap<String, String>)>;
 

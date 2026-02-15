@@ -169,3 +169,6 @@ pub mod body;
 pub mod requests;
 
 pub use scraper;
+
+// Re-export proc-macros from wdpe-macros
+pub use wdpe_macros::{WdElement, WdLsData, WdSubElement, wd_event};
