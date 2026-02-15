@@ -2,6 +2,8 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{DeriveInput, Error, Fields, LitStr, Result};
 
+use crate::utils::has_wd_element_flag_on_field;
+
 /// Parsed struct-level `#[wd_element(...)]` attributes.
 struct ElementAttrs {
     control_id: String,
@@ -12,6 +14,7 @@ struct ElementAttrs {
     lsdata: String,
     textisable: bool,
     skip_registration: bool,
+    wrapper_variant: Option<String>,
 }
 
 /// Parsed field info.
@@ -125,6 +128,13 @@ fn derive_wd_element_inner(input: TokenStream) -> Result<TokenStream> {
     let def_name = Ident::new(&attrs.def, Span::call_site());
     let lsdata_type = Ident::new(&attrs.lsdata, Span::call_site());
 
+    // Determine the ElementWrapper variant name
+    let wrapper_variant_ident = if let Some(ref variant) = attrs.wrapper_variant {
+        Ident::new(variant, Span::call_site())
+    } else {
+        struct_name.clone()
+    };
+
     // Generate definition struct
     let def_doc_attr = if let Some(ref doc) = attrs.def_doc {
         quote! { #[doc = #doc] }
@@ -226,7 +236,7 @@ fn derive_wd_element_inner(input: TokenStream) -> Result<TokenStream> {
                 }
 
                 fn wrap(self) -> crate::element::ElementWrapper<#lt> {
-                    crate::element::ElementWrapper::#struct_name(self)
+                    crate::element::ElementWrapper::#wrapper_variant_ident(self)
                 }
 
                 fn children(&self) -> Vec<crate::element::ElementWrapper<#lt>> {
@@ -330,7 +340,7 @@ fn derive_wd_element_inner(input: TokenStream) -> Result<TokenStream> {
                     control_id: #control_id,
                     to_string_fn: |wrapper| {
                         match wrapper {
-                            crate::element::ElementWrapper::#struct_name(el) => Some(el.to_string()),
+                            crate::element::ElementWrapper::#wrapper_variant_ident(el) => Some(el.to_string()),
                             _ => None,
                         }
                     },
@@ -341,29 +351,29 @@ fn derive_wd_element_inner(input: TokenStream) -> Result<TokenStream> {
         quote! {}
     };
 
-    // Generate Default assertion for custom fields
-    let custom_field_assertions: Vec<_> = field_infos
+    // Generate Default assertion for custom fields — emit the helper function
+    // once, outside the per-field loop, then one call per custom field.
+    let custom_field_type_assertions: Vec<_> = field_infos
         .iter()
         .filter(|f| f.is_custom)
         .map(|f| {
-            // Find the field's type from the original fields
             let field_type = fields
                 .iter()
                 .find(|fld| fld.ident.as_ref().unwrap() == &f.ident)
                 .map(|fld| &fld.ty)
                 .unwrap();
             quote! {
-                fn _assert_default<T: Default>() {}
                 _assert_default::<#field_type>();
             }
         })
         .collect();
 
-    let default_assertions = if !custom_field_assertions.is_empty() {
+    let default_assertions = if !custom_field_type_assertions.is_empty() {
         quote! {
             const _: () = {
+                fn _assert_default<T: Default>() {}
                 fn _check() {
-                    #(#custom_field_assertions)*
+                    #(#custom_field_type_assertions)*
                 }
             };
         }
@@ -392,6 +402,7 @@ fn parse_element_attrs(input: &DeriveInput) -> Result<ElementAttrs> {
     let mut lsdata: Option<String> = None;
     let mut textisable = false;
     let mut skip_registration = false;
+    let mut wrapper_variant: Option<String> = None;
 
     for attr in &input.attrs {
         if !attr.path().is_ident("wd_element") {
@@ -424,6 +435,10 @@ fn parse_element_attrs(input: &DeriveInput) -> Result<ElementAttrs> {
                 textisable = true;
             } else if meta.path.is_ident("skip_registration") {
                 skip_registration = true;
+            } else if meta.path.is_ident("wrapper_variant") {
+                let value = meta.value()?;
+                let lit: LitStr = value.parse()?;
+                wrapper_variant = Some(lit.value());
             }
             Ok(())
         })?;
@@ -463,25 +478,6 @@ fn parse_element_attrs(input: &DeriveInput) -> Result<ElementAttrs> {
         lsdata,
         textisable,
         skip_registration,
+        wrapper_variant,
     })
-}
-
-/// Check if a field has a specific `#[wd_element(flag)]` attribute.
-fn has_wd_element_flag_on_field(attrs: &[syn::Attribute], flag: &str) -> bool {
-    for attr in attrs {
-        if !attr.path().is_ident("wd_element") {
-            continue;
-        }
-        let mut found = false;
-        let _ = attr.parse_nested_meta(|meta| {
-            if meta.path.is_ident(flag) {
-                found = true;
-            }
-            Ok(())
-        });
-        if found {
-            return true;
-        }
-    }
-    false
 }

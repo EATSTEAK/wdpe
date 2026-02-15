@@ -2,6 +2,8 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{DeriveInput, Error, Fields, LitStr, Result};
 
+use crate::utils::has_wd_element_flag_on_field;
+
 /// Parsed struct-level `#[wd_element(...)]` attributes for sub-elements.
 struct SubElementAttrs {
     parent: String,
@@ -342,24 +344,4 @@ fn parse_subelement_attrs(input: &DeriveInput) -> Result<SubElementAttrs> {
         def_doc,
         lsdata,
     })
-}
-
-/// Check if a field has a specific `#[wd_element(flag)]` attribute.
-fn has_wd_element_flag_on_field(attrs: &[syn::Attribute], flag: &str) -> bool {
-    for attr in attrs {
-        if !attr.path().is_ident("wd_element") {
-            continue;
-        }
-        let mut found = false;
-        let _ = attr.parse_nested_meta(|meta| {
-            if meta.path.is_ident(flag) {
-                found = true;
-            }
-            Ok(())
-        });
-        if found {
-            return true;
-        }
-    }
-    false
 }

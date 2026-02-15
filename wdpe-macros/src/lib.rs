@@ -4,30 +4,36 @@ mod element;
 mod event;
 mod lsdata;
 mod subelement;
+pub(crate) mod utils;
 
 use proc_macro::TokenStream;
 
-/// Attribute macro that transforms an LsData struct.
+/// Derive macro that generates deserialization, trait impls, and accessor
+/// methods for WebDynpro LsData structs.
 ///
-/// Wraps each field in `Option<T>`, converts `#[wd_lsdata(index = "N")]`
-/// to `#[serde(rename = "N")]`, injects standard derives, and generates
-/// accessor methods.
+/// The user writes a struct with `Option<T>` fields and
+/// `#[wd_lsdata(index = "N")]` attributes. The derive macro generates:
+///
+/// 1. A `serde::Deserialize` impl via a private shadow struct (with
+///    `#[serde(rename = "N")]` derived from `wd_lsdata(index)`)
+/// 2. `Clone`, `Debug`, and `Default` trait implementations
+/// 3. Accessor methods (`fn field(&self) -> Option<&T>`) for every field
 ///
 /// # Example
 ///
 /// ```ignore
-/// #[WdLsData]
+/// #[derive(WdLsData)]
+/// #[allow(unused)]
 /// pub struct ButtonLsData {
 ///     #[wd_lsdata(index = "0")]
-///     text: String,
+///     text: Option<String>,
 ///     #[wd_lsdata(index = "2")]
-///     design: ButtonDesign,
+///     design: Option<ButtonDesign>,
 /// }
 /// ```
-#[proc_macro_attribute]
-#[allow(non_snake_case)]
-pub fn WdLsData(attr: TokenStream, item: TokenStream) -> TokenStream {
-    lsdata::wd_lsdata_impl(attr.into(), item.into()).into()
+#[proc_macro_derive(WdLsData, attributes(wd_lsdata))]
+pub fn derive_wd_lsdata(input: TokenStream) -> TokenStream {
+    lsdata::derive_wd_lsdata_impl(input.into()).into()
 }
 
 /// Derive macro for WebDynpro elements.
@@ -85,7 +91,11 @@ pub fn derive_wd_subelement(input: TokenStream) -> TokenStream {
     subelement::derive_wd_subelement_impl(input.into()).into()
 }
 
-/// Attribute macro for generating event-firing methods.
+/// Attribute macro that generates event-firing method bodies for interactable elements.
+///
+/// **Note:** This macro must only be applied to methods on types that implement
+/// the `Interactable` trait, as the generated code calls `self.fire_event()`.
+/// Applying it to non-interactable elements will result in a compile error.
 ///
 /// Replaces the function body and return type. Automatically inserts
 /// the `"Id"` parameter from `self.id` and any declared params.

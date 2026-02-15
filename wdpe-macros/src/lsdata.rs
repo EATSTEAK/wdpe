@@ -1,29 +1,33 @@
 use proc_macro2::TokenStream;
-use quote::{ToTokens, quote};
-use syn::{DeriveInput, Error, Fields, LitStr, Meta, Result, parse2};
+use quote::{format_ident, quote};
+use syn::{DeriveInput, Error, Fields, LitStr, Result, parse2};
 
-/// Implementation for the `#[WdLsData]` attribute macro.
+use crate::utils::has_serde_rename_attr;
+
+/// Implementation for the `#[derive(WdLsData)]` derive macro.
 ///
-/// Transforms a struct so that:
-/// - Each field `name: Type` becomes `name: Option<Type>`
-/// - `#[wd_lsdata(index = "N")]` becomes `#[serde(rename = "N")]`
-///   (or `#[serde(rename(deserialize = "N"))]` if the field has other serde rename attrs)
-/// - Outer derives `Clone, serde::Deserialize, Debug, Default` are injected
-/// - `#[allow(unused)]` is injected on the struct
-/// - Accessor `fn name(&self) -> Option<&Type>` is generated for each field
-/// - User-supplied `#[serde(...)]` and `#[doc = "..."]` attributes are preserved
-/// - `#[wd_lsdata(...)]` attributes are consumed (removed from output)
-pub fn wd_lsdata_impl(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    match wd_lsdata_inner(item) {
+/// The user writes a struct with `Option<T>` fields and `#[wd_lsdata(index = "N")]`
+/// attributes. The derive macro generates:
+///
+/// 1. A **private shadow struct** inside `const _: () = { ... }` with `#[serde(rename = "N")]`
+///    (or `#[serde(rename(deserialize = "N"))]` when user-written serde rename attrs exist),
+///    plus a `serde::Deserialize` impl for the original struct that delegates to the shadow.
+/// 2. `impl Clone`, `impl Debug`, `impl Default` for the struct.
+/// 3. Accessor methods `fn field_name(&self) -> Option<&Type>` for each field.
+///
+/// User-supplied `#[serde(...)]` attributes on both the struct and fields are passed through
+/// to the shadow struct. The `#[wd_lsdata(...)]` attributes are consumed (not forwarded).
+pub fn derive_wd_lsdata_impl(input: TokenStream) -> TokenStream {
+    match derive_wd_lsdata_inner(input) {
         Ok(tokens) => tokens,
         Err(e) => e.to_compile_error(),
     }
 }
 
-fn wd_lsdata_inner(item: TokenStream) -> Result<TokenStream> {
-    let input: DeriveInput = parse2(item)?;
+fn derive_wd_lsdata_inner(input: TokenStream) -> Result<TokenStream> {
+    let input: DeriveInput = parse2(input)?;
     let name = &input.ident;
-    let vis = &input.vis;
+    let _vis = &input.vis;
 
     let fields = match &input.data {
         syn::Data::Struct(data) => match &data.fields {
@@ -43,44 +47,31 @@ fn wd_lsdata_inner(item: TokenStream) -> Result<TokenStream> {
         }
     };
 
-    // Collect struct-level serde attributes (pass-through)
+    // Collect struct-level serde attributes (pass-through to shadow struct)
     let struct_serde_attrs: Vec<_> = input
         .attrs
         .iter()
         .filter(|a| a.path().is_ident("serde"))
         .collect();
 
-    // Check if struct has serde rename_all or rename
-    let has_struct_serde_rename = struct_serde_attrs.iter().any(|a| {
-        let tokens = a.meta.to_token_stream().to_string();
-        tokens.contains("rename_all") || tokens.contains("rename")
-    });
+    // Check if struct has serde rename_all or rename (using structural parsing)
+    let has_struct_serde_rename = has_serde_rename_attr(
+        &input
+            .attrs
+            .iter()
+            .filter(|a| a.path().is_ident("serde"))
+            .cloned()
+            .collect::<Vec<_>>(),
+    );
 
-    // Collect struct-level doc attrs
-    let struct_doc_attrs: Vec<_> = input
-        .attrs
-        .iter()
-        .filter(|a| a.path().is_ident("doc"))
-        .collect();
+    let helper_name = format_ident!("__{}DeserializeHelper", name);
 
-    // Collect user-written non-serde, non-doc, non-wd_lsdata, non-derive attrs
-    let struct_other_attrs: Vec<_> = input
-        .attrs
-        .iter()
-        .filter(|a| {
-            !a.path().is_ident("serde")
-                && !a.path().is_ident("doc")
-                && !a.path().is_ident("wd_lsdata")
-                && !a.path().is_ident("derive")
-                && !a.path().is_ident("WdLsData")
-        })
-        .collect();
-
-    // Collect any user-written extra derives (beyond WdLsData itself)
-    let user_derives = extract_user_derives(&input.attrs);
-
-    let mut field_defs = Vec::new();
+    let mut helper_field_defs = Vec::new();
+    let mut conversion_fields = Vec::new();
     let mut accessors = Vec::new();
+    let mut field_names_for_clone = Vec::new();
+    let mut field_names_for_debug = Vec::new();
+    let mut field_names_for_default = Vec::new();
 
     for field in fields {
         let field_name = field
@@ -98,18 +89,22 @@ fn wd_lsdata_inner(item: TokenStream) -> Result<TokenStream> {
             )
         })?;
 
-        // Collect field-level serde attrs (pass-through)
+        // Collect field-level serde attrs (pass-through to shadow)
         let field_serde_attrs: Vec<_> = field
             .attrs
             .iter()
             .filter(|a| a.path().is_ident("serde"))
             .collect();
 
-        // Check if field has serde rename attrs
-        let has_field_serde_rename = field_serde_attrs.iter().any(|a| {
-            let tokens = a.meta.to_token_stream().to_string();
-            tokens.contains("rename")
-        });
+        // Check if field has serde rename attrs (using structural parsing)
+        let has_field_serde_rename = has_serde_rename_attr(
+            &field
+                .attrs
+                .iter()
+                .filter(|a| a.path().is_ident("serde"))
+                .cloned()
+                .collect::<Vec<_>>(),
+        );
 
         // Decide rename strategy
         let rename_attr = if has_field_serde_rename || has_struct_serde_rename {
@@ -126,35 +121,92 @@ fn wd_lsdata_inner(item: TokenStream) -> Result<TokenStream> {
             .filter(|a| !a.path().is_ident("wd_lsdata") && !a.path().is_ident("serde"))
             .collect();
 
-        field_defs.push(quote! {
-            #(#field_other_attrs)*
+        // Shadow struct fields (for deserialization)
+        helper_field_defs.push(quote! {
             #(#field_serde_attrs)*
             #rename_attr
-            #field_vis #field_name: Option<#field_type>,
+            #field_name: #field_type,
         });
 
-        accessors.push(quote! {
-            pub fn #field_name(&self) -> Option<&#field_type> {
-                self.#field_name.as_ref()
-            }
+        // Conversion from helper to user struct
+        conversion_fields.push(quote! {
+            #field_name: helper.#field_name,
         });
+
+        // Accessor methods
+        // Check if the field type is Option<T> — extract T for the accessor return type
+        let inner_type = extract_option_inner_type(field_type);
+        let accessor = if let Some(inner_ty) = inner_type {
+            quote! {
+                #(#field_other_attrs)*
+                #field_vis fn #field_name(&self) -> Option<&#inner_ty> {
+                    self.#field_name.as_ref()
+                }
+            }
+        } else {
+            // If not Option<T>, return a reference directly
+            quote! {
+                #(#field_other_attrs)*
+                #field_vis fn #field_name(&self) -> &#field_type {
+                    &self.#field_name
+                }
+            }
+        };
+        accessors.push(accessor);
+
+        field_names_for_clone.push(quote! { #field_name: self.#field_name.clone() });
+        field_names_for_debug.push(quote! {
+            .field(stringify!(#field_name), &self.#field_name)
+        });
+        field_names_for_default.push(quote! { #field_name: Default::default() });
     }
 
-    let user_derive_tokens = if user_derives.is_empty() {
-        quote! {}
-    } else {
-        quote! { #[derive(#(#user_derives),*)] }
-    };
+    let name_str = name.to_string();
 
     Ok(quote! {
-        #(#struct_doc_attrs)*
-        #(#struct_other_attrs)*
-        #(#struct_serde_attrs)*
-        #[derive(Clone, serde::Deserialize, Debug, Default)]
-        #user_derive_tokens
-        #[allow(unused)]
-        #vis struct #name {
-            #(#field_defs)*
+        // Generate Deserialize impl via a private shadow struct
+        const _: () = {
+            #[derive(serde::Deserialize)]
+            #(#struct_serde_attrs)*
+            struct #helper_name {
+                #(#helper_field_defs)*
+            }
+
+            impl<'de> serde::Deserialize<'de> for #name {
+                fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+                where
+                    D: serde::Deserializer<'de>,
+                {
+                    let helper = #helper_name::deserialize(deserializer)?;
+                    Ok(#name {
+                        #(#conversion_fields)*
+                    })
+                }
+            }
+        };
+
+        impl Clone for #name {
+            fn clone(&self) -> Self {
+                Self {
+                    #(#field_names_for_clone,)*
+                }
+            }
+        }
+
+        impl std::fmt::Debug for #name {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.debug_struct(#name_str)
+                    #(#field_names_for_debug)*
+                    .finish()
+            }
+        }
+
+        impl Default for #name {
+            fn default() -> Self {
+                Self {
+                    #(#field_names_for_default,)*
+                }
+            }
         }
 
         #[allow(missing_docs)]
@@ -186,25 +238,17 @@ fn extract_wd_lsdata_index(attrs: &[syn::Attribute]) -> Result<Option<String>> {
     Ok(None)
 }
 
-/// Extract user-written derives from `#[derive(...)]` attributes,
-/// filtering out `WdLsData` itself.
-fn extract_user_derives(attrs: &[syn::Attribute]) -> Vec<syn::Path> {
-    let mut derives = Vec::new();
-    for attr in attrs {
-        if !attr.path().is_ident("derive") {
-            continue;
-        }
-        if let Meta::List(list) = &attr.meta {
-            let parser = syn::punctuated::Punctuated::<syn::Path, syn::Token![,]>::parse_terminated;
-            if let Ok(paths) = list.parse_args_with(parser) {
-                for path in paths {
-                    // Filter out WdLsData itself
-                    if !path.is_ident("WdLsData") {
-                        derives.push(path);
-                    }
-                }
-            }
+/// Extract the inner type `T` from `Option<T>`. Returns `None` if the type
+/// is not a simple `Option<T>` path.
+fn extract_option_inner_type(ty: &syn::Type) -> Option<&syn::Type> {
+    if let syn::Type::Path(type_path) = ty {
+        let segment = type_path.path.segments.last()?;
+        if segment.ident == "Option"
+            && let syn::PathArguments::AngleBracketed(args) = &segment.arguments
+            && let Some(syn::GenericArgument::Type(inner)) = args.args.first()
+        {
+            return Some(inner);
         }
     }
-    derives
+    None
 }
