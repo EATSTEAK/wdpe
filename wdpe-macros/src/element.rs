@@ -338,7 +338,6 @@ fn derive_wd_element_inner(input: TokenStream) -> Result<TokenStream> {
         quote! {
             inventory::submit! {
                 crate::element::registry::TextisableRegistration {
-                    control_id: #control_id,
                     to_string_fn: |wrapper| {
                         match wrapper {
                             crate::element::ElementWrapper::#wrapper_variant_ident(el) => Some(el.to_string()),

@@ -69,9 +69,9 @@ pub mod registry;
 /// 엘리먼트에서 발생시킬 수 있는 이벤트의 기본 파라메터
 pub type EventParameterMap = HashMap<String, (UcfParameters, HashMap<String, String>)>;
 
-macro_rules! register_elements {
+macro_rules! element_wrapper_impls {
     [$( $enum:ident : $type: ty ),+ $(,)?] => {
-    	/// 도큐먼트에서 파싱한 [`Element`]를 공통의 타입으로 취급할 수 있게 하는 Wrapper
+        /// 도큐먼트에서 파싱한 [`Element`]를 공통의 타입으로 취급할 수 있게 하는 Wrapper
         #[allow(missing_docs, clippy::large_enum_variant)]
         pub enum ElementWrapper<'a> {
             $( $enum($type), )*
@@ -97,23 +97,6 @@ macro_rules! register_elements {
         }
 
         impl<'a> ElementWrapper<'a> {
-        	/// 분류를 알 수 없는 엘리먼트의 `scraper::ElementRef`로 [`ElementWrapper`]를 반환합니다.
-            pub fn from_ref(element: scraper::ElementRef<'a>) -> Result<ElementWrapper<'a>, WebDynproError> {
-                let value = element.value();
-                let id = value.id().ok_or(BodyError::NoSuchAttribute("id".to_owned()))?.to_owned();
-                #[allow(unreachable_patterns)]
-                match element.value().attr("ct") {
-                    $( Some(<$type>::CONTROL_ID) => {
-                        let def = <$type as $crate::element::Element<'a>>::Def::new_dynamic(id);
-                        Ok(<$type as $crate::element::Element<'a>>::from_ref(&def, element)?.wrap())
-                    }, )*
-                    _ => {
-                        let def = <$crate::element::unknown::Unknown as $crate::element::Element<'a>>::Def::new_dynamic(id);
-                        Ok(<$crate::element::unknown::Unknown as $crate::element::Element<'a>>::from_ref(&def, element)?.wrap())
-                    }
-                }
-            }
-
             /// 주어진 [`ElementDefWrapper`]와 일치하는 [`ElementWrapper`]를 반환합니다.
             pub fn from_def(wrapper: &'a ElementDefWrapper, parser: &'a $crate::element::parser::ElementParser) -> Result<ElementWrapper<'a>, WebDynproError> {
                 match wrapper {
@@ -153,7 +136,7 @@ macro_rules! register_elements {
         }
 
         impl<'a> ElementDefWrapper<'a> {
-        	/// 분류를 알 수 없는 엘리먼트의 `scraper::ElementRef`로 [`ElementDefWrapper`]를 반환합니다.
+            /// 분류를 알 수 없는 엘리먼트의 `scraper::ElementRef`로 [`ElementDefWrapper`]를 반환합니다.
             pub fn from_ref(element: scraper::ElementRef<'a>) -> Result<ElementDefWrapper<'a>, WebDynproError> {
                 let value = element.value();
                 let id = value.id().ok_or(BodyError::NoSuchAttribute("id".to_owned()))?.to_owned();
@@ -184,7 +167,7 @@ macro_rules! register_elements {
     };
 }
 
-register_elements![
+element_wrapper_impls![
     Button: Button<'a>,
     ButtonRow: ButtonRow<'a>,
     CheckBox: CheckBox<'a>,
@@ -219,6 +202,31 @@ register_elements![
     TextView: TextView<'a>,
     Caption: Caption<'a>,
 ];
+
+// `ElementWrapper::from_ref` uses inventory-based dispatch via `registry_map()`
+// instead of a static match on control IDs.
+impl<'a> ElementWrapper<'a> {
+    /// 분류를 알 수 없는 엘리먼트의 `scraper::ElementRef`로 [`ElementWrapper`]를 반환합니다.
+    pub fn from_ref(
+        element: scraper::ElementRef<'a>,
+    ) -> Result<ElementWrapper<'a>, WebDynproError> {
+        let value = element.value();
+        let id = value
+            .id()
+            .ok_or(BodyError::NoSuchAttribute("id".to_owned()))?
+            .to_owned();
+
+        if let Some(ct) = value.attr("ct")
+            && let Some(factory) = registry::registry_map().get(ct)
+        {
+            return factory(id, element);
+        }
+
+        // Fallback to Unknown
+        let def = unknown::UnknownDef::new_dynamic(id);
+        Ok(unknown::Unknown::from_ref(&def, element)?.wrap())
+    }
+}
 
 /// 애플리케이션에서 쉽게 엘리먼트를 미리 정의할 수 있는 매크로
 /// ### 예시

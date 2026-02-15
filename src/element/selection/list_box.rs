@@ -123,6 +123,19 @@ macro_rules! def_listbox_subset {
                 Self($crate::element::selection::list_box::ListBox::new(id, element_ref))
             }
         }
+
+        inventory::submit! {
+            $crate::element::registry::ElementRegistration::new(
+                $id,
+                "ListBox",
+                |id, element_ref| {
+                    use $crate::element::Element;
+                    use $crate::element::definition::ElementDefinition;
+                    let def = $def_name::new_dynamic(id);
+                    Ok($name::from_ref(&def, element_ref)?.wrap())
+                },
+            )
+        }
     )+
 
     /// [`ListBox`] 분류의 엘리먼트의 정의를 위한 Wrapper
@@ -348,83 +361,3 @@ impl<'a> ListBox<'a> {
 
 /// [`ListBoxItem`](item::ListBoxItem)과 [`ListBoxActionItem`](item::ListBoxActionItem)이 포함된 모듈
 pub mod item;
-
-// Manual inventory registrations for ListBox variants (not using #[derive(WdElement)])
-
-inventory::submit! {
-    crate::element::registry::ElementRegistration::new(
-        "LIB_P",
-        "ListBox",
-        |id, element_ref| {
-            use crate::element::Element;
-            use crate::element::definition::ElementDefinition;
-            let def = ListBoxPopupDef::new_dynamic(id);
-            Ok(ListBoxPopup::from_ref(&def, element_ref)?.wrap())
-        },
-    )
-}
-
-inventory::submit! {
-    crate::element::registry::ElementRegistration::new(
-        "LIB_PJ",
-        "ListBox",
-        |id, element_ref| {
-            use crate::element::Element;
-            use crate::element::definition::ElementDefinition;
-            let def = ListBoxPopupJsonDef::new_dynamic(id);
-            Ok(ListBoxPopupJson::from_ref(&def, element_ref)?.wrap())
-        },
-    )
-}
-
-inventory::submit! {
-    crate::element::registry::ElementRegistration::new(
-        "LIB_PS",
-        "ListBox",
-        |id, element_ref| {
-            use crate::element::Element;
-            use crate::element::definition::ElementDefinition;
-            let def = ListBoxPopupFilteredDef::new_dynamic(id);
-            Ok(ListBoxPopupFiltered::from_ref(&def, element_ref)?.wrap())
-        },
-    )
-}
-
-inventory::submit! {
-    crate::element::registry::ElementRegistration::new(
-        "LIB_PJS",
-        "ListBox",
-        |id, element_ref| {
-            use crate::element::Element;
-            use crate::element::definition::ElementDefinition;
-            let def = ListBoxPopupJsonFilteredDef::new_dynamic(id);
-            Ok(ListBoxPopupJsonFiltered::from_ref(&def, element_ref)?.wrap())
-        },
-    )
-}
-
-inventory::submit! {
-    crate::element::registry::ElementRegistration::new(
-        "LIB_M",
-        "ListBox",
-        |id, element_ref| {
-            use crate::element::Element;
-            use crate::element::definition::ElementDefinition;
-            let def = ListBoxMultipleDef::new_dynamic(id);
-            Ok(ListBoxMultiple::from_ref(&def, element_ref)?.wrap())
-        },
-    )
-}
-
-inventory::submit! {
-    crate::element::registry::ElementRegistration::new(
-        "LIB_S",
-        "ListBox",
-        |id, element_ref| {
-            use crate::element::Element;
-            use crate::element::definition::ElementDefinition;
-            let def = ListBoxSingleDef::new_dynamic(id);
-            Ok(ListBoxSingle::from_ref(&def, element_ref)?.wrap())
-        },
-    )
-}

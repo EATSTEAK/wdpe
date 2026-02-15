@@ -56,8 +56,6 @@ pub fn registry_map() -> &'static HashMap<&'static str, FactoryFn> {
 
 /// Registration for elements that support text conversion (`textisable`).
 pub struct TextisableRegistration {
-    /// The HTML `ct` attribute value
-    pub control_id: &'static str,
     /// Function that attempts to convert an ElementWrapper to a String
     pub to_string_fn: for<'a> fn(&ElementWrapper<'a>) -> Option<String>,
 }
