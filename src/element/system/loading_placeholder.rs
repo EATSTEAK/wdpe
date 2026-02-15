@@ -1,6 +1,6 @@
 use std::{borrow::Cow, cell::OnceCell};
 
-use crate::{WdElement, WdLsData};
+use crate::{WdElement, WdLsData, wd_event};
 
 #[doc = "[`LoadingPlaceholder`] 내부 데이터"]
 #[derive(WdLsData)]
@@ -41,6 +41,6 @@ pub struct LoadingPlaceholder<'a> {
 
 impl<'a> LoadingPlaceholder<'a> {
     /// 페이지를 로드하기 위한 이벤트를 반환합니다.
-    #[crate::wd_event(name = "Load")]
-    pub fn load(&self) -> Result<Event, WebDynproError> {}
+    #[wd_event(name = "Load")]
+    pub fn load(&self) {}
 }

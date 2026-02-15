@@ -1,9 +1,6 @@
 use std::{borrow::Cow, cell::OnceCell};
 
-use crate::{
-    element::property::Visibility,
-    WdElement, WdLsData,
-};
+use crate::{WdElement, WdLsData, element::property::Visibility};
 
 // TODO: Implement additional events and data
 #[doc = "[`Label`] 내부 데이터"]

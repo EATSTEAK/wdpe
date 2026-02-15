@@ -1,3 +1,8 @@
+// NOTE: Not migrated to #[derive(WdElement)] because Unknown is the fallback
+// element type. It uses serde_json::Value as ElementLSData (not a generated
+// LsData struct), has a custom `ct` field, and serves as the catch-all case
+// in ElementWrapper::from_ref() when no registered element matches.
+
 use std::{borrow::Cow, cell::OnceCell};
 
 use crate::element::utils::{children_element, parse_lsdata, parse_lsevents};

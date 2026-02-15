@@ -1,3 +1,7 @@
+// NOTE: Not migrated to #[derive(WdElement)] because Custom is a pseudo-element
+// with no DOM representation. It has no element_ref (panics on access),
+// uses () as ElementLSData, and is only constructed programmatically.
+
 use std::{borrow::Cow, collections::HashMap};
 
 use crate::{

@@ -1,3 +1,9 @@
+// NOTE: Not migrated to #[derive(WdElement)] / #[derive(WdLsData)] because
+// ClientInspectorLSData requires both Serialize and Deserialize with asymmetric
+// rename rules (rename_all(serialize = "PascalCase") + per-field rename(deserialize = "N")).
+// The WdLsData derive only handles Deserialize. Additionally, client_infos() builds
+// custom UCF parameters that don't follow the standard wd_event pattern.
+
 use std::{borrow::Cow, cell::OnceCell, collections::HashMap};
 
 use serde::{Deserialize, Serialize};
