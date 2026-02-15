@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use super::{SapTableHeader, SapTableRow, cell::SapTableCell};
 use crate::element::ElementWrapper;
+use crate::element::definition::ElementDefinition as _;
 use crate::element::parser::ElementParser;
 use crate::error::{ElementError, WebDynproError};
 
@@ -9,7 +10,7 @@ use crate::error::{ElementError, WebDynproError};
 pub trait FromSapTable<'body>: Sized {
     /// [`SapTableRow`]를 해당 형으로 변환하고자 시도하는 함수
     fn from_table(
-        header: &'body SapTableHeader,
+        header: Option<&'body SapTableHeader>,
         row: &'body SapTableRow,
         parser: &'body ElementParser,
     ) -> Result<Self, WebDynproError>;
@@ -17,7 +18,7 @@ pub trait FromSapTable<'body>: Sized {
 
 impl<'body> FromSapTable<'body> for Vec<Option<String>> {
     fn from_table(
-        _header: &'body SapTableHeader,
+        _header: Option<&'body SapTableHeader>,
         row: &'body SapTableRow,
         parser: &'body ElementParser,
     ) -> Result<Self, WebDynproError> {
@@ -39,7 +40,7 @@ impl<'body> FromSapTable<'body> for Vec<Option<String>> {
 
 impl<'body> FromSapTable<'body> for Vec<String> {
     fn from_table(
-        _header: &'body SapTableHeader,
+        _header: Option<&'body SapTableHeader>,
         row: &'body SapTableRow,
         parser: &'body ElementParser,
     ) -> Result<Self, WebDynproError> {
@@ -60,10 +61,14 @@ impl<'body> FromSapTable<'body> for Vec<String> {
 
 impl<'body> FromSapTable<'body> for Vec<(String, Option<String>)> {
     fn from_table(
-        header: &'body SapTableHeader,
+        header: Option<&'body SapTableHeader>,
         row: &'body SapTableRow,
         parser: &'body ElementParser,
     ) -> Result<Self, WebDynproError> {
+        let header = header.ok_or(ElementError::NoSuchContent {
+            element: row.table_def().id().to_string(),
+            content: "Header of table".to_string(),
+        })?;
         let header_iter = header.iter_value(parser);
         let header_string = header_iter
             .map(|val| match val {
@@ -96,10 +101,14 @@ impl<'body> FromSapTable<'body> for Vec<(String, Option<String>)> {
 
 impl<'body> FromSapTable<'body> for Vec<(String, String)> {
     fn from_table(
-        header: &'body SapTableHeader,
+        header: Option<&'body SapTableHeader>,
         row: &'body SapTableRow,
         parser: &'body ElementParser,
     ) -> Result<Self, WebDynproError> {
+        let header = header.ok_or(ElementError::NoSuchContent {
+            element: row.table_def().id().to_string(),
+            content: "Header of table".to_string(),
+        })?;
         let header_iter = header.iter_value(parser);
         let header_string = header_iter
             .map(|val| match val {
@@ -132,7 +141,7 @@ impl<'body> FromSapTable<'body> for Vec<(String, String)> {
 
 impl<'body> FromSapTable<'body> for HashMap<String, String> {
     fn from_table(
-        header: &'body SapTableHeader,
+        header: Option<&'body SapTableHeader>,
         row: &'body SapTableRow,
         parser: &'body ElementParser,
     ) -> Result<Self, WebDynproError> {
@@ -143,7 +152,7 @@ impl<'body> FromSapTable<'body> for HashMap<String, String> {
 
 impl<'body> FromSapTable<'body> for HashMap<String, Option<String>> {
     fn from_table(
-        header: &'body SapTableHeader,
+        header: Option<&'body SapTableHeader>,
         row: &'body SapTableRow,
         parser: &'body ElementParser,
     ) -> Result<Self, WebDynproError> {
