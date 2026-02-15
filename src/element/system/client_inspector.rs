@@ -224,7 +224,6 @@ impl<'a> Interactable<'a> for ClientInspector<'a> {
 inventory::submit! {
     crate::element::registry::ElementRegistration::new(
         "CI",
-        "ClientInspector",
         |id, element_ref| {
             use crate::element::Element;
             use crate::element::definition::ElementDefinition;

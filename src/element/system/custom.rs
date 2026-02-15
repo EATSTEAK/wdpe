@@ -191,7 +191,6 @@ impl Custom {
 inventory::submit! {
     crate::element::registry::ElementRegistration::new(
         "CUSTOM",
-        "Custom",
         |id, _element_ref| {
             Ok(crate::element::ElementWrapper::Custom(Custom::new(std::borrow::Cow::Owned(id))))
         },

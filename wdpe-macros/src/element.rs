@@ -319,7 +319,6 @@ fn derive_wd_element_inner(input: TokenStream) -> Result<TokenStream> {
             inventory::submit! {
                 crate::element::registry::ElementRegistration::new(
                     #control_id,
-                    #element_name_str,
                     |id, element_ref| {
                         use crate::element::Element as _;
                         use crate::element::definition::ElementDefinition as _;

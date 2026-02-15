@@ -42,6 +42,7 @@ pub struct Form<'a> {
     lsdata: OnceCell<FormLSData>,
     #[wd_element(lsevents_field)]
     lsevents: OnceCell<Option<crate::element::EventParameterMap>>,
+    #[allow(dead_code)]
     data: OnceCell<FormData>,
 }
 

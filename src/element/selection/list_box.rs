@@ -127,7 +127,6 @@ macro_rules! def_listbox_subset {
         inventory::submit! {
             $crate::element::registry::ElementRegistration::new(
                 $id,
-                "ListBox",
                 |id, element_ref| {
                     use $crate::element::Element;
                     use $crate::element::definition::ElementDefinition;

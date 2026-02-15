@@ -19,22 +19,15 @@ pub type FactoryFn =
 pub struct ElementRegistration {
     /// The HTML `ct` attribute value (e.g., "B" for Button)
     pub control_id: &'static str,
-    /// The WebDynpro element name (e.g., "Button")
-    pub element_name: &'static str,
     /// Factory function: given an id string and ElementRef, produces an ElementWrapper
     pub from_ref_fn: FactoryFn,
 }
 
 impl ElementRegistration {
     /// Creates a new element registration entry.
-    pub const fn new(
-        control_id: &'static str,
-        element_name: &'static str,
-        from_ref_fn: FactoryFn,
-    ) -> Self {
+    pub const fn new(control_id: &'static str, from_ref_fn: FactoryFn) -> Self {
         Self {
             control_id,
-            element_name,
             from_ref_fn,
         }
     }
@@ -46,7 +39,7 @@ inventory::collect!(ElementRegistration);
 pub fn registry_map() -> &'static HashMap<&'static str, FactoryFn> {
     static MAP: OnceLock<HashMap<&'static str, FactoryFn>> = OnceLock::new();
     MAP.get_or_init(|| {
-        let mut map = HashMap::new();
+        let mut map = HashMap::with_capacity(32);
         for reg in inventory::iter::<ElementRegistration> {
             map.insert(reg.control_id, reg.from_ref_fn);
         }
