@@ -27,7 +27,6 @@ pub fn derive_wd_lsdata_impl(input: TokenStream) -> TokenStream {
 fn derive_wd_lsdata_inner(input: TokenStream) -> Result<TokenStream> {
     let input: DeriveInput = parse2(input)?;
     let name = &input.ident;
-    let _vis = &input.vis;
 
     let fields = match &input.data {
         syn::Data::Struct(data) => match &data.fields {
@@ -79,7 +78,6 @@ fn derive_wd_lsdata_inner(input: TokenStream) -> Result<TokenStream> {
             .as_ref()
             .ok_or_else(|| Error::new_spanned(field, "WdLsData fields must be named"))?;
         let field_type = &field.ty;
-        let _field_vis = &field.vis;
 
         // Extract #[wd_lsdata(index = "N")]
         let index_value = extract_wd_lsdata_index(&field.attrs)?.ok_or_else(|| {

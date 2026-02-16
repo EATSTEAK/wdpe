@@ -110,6 +110,14 @@ fn derive_wd_element_inner(input: TokenStream) -> Result<TokenStream> {
         ));
     }
 
+    if !attrs.interactable && field_infos.iter().any(|f| f.is_lsevents) {
+        return Err(Error::new_spanned(
+            struct_name,
+            "Field marked with #[wd_element(lsevents_field)] has no effect without #[wd_element(interactable)]. \
+             Either add #[wd_element(interactable)] or remove the lsevents_field annotation.",
+        ));
+    }
+
     let element_ref_field = field_infos
         .iter()
         .find(|f| f.is_element_ref)
