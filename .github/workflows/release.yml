@@ -61,13 +61,15 @@ jobs:
         id: check_macros
         run: |
           MACROS_VERSION=$(yq '.package.version' wdpe-macros/Cargo.toml)
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://crates.io/api/v1/crates/wdpe-macros/$MACROS_VERSION")
+          echo "Checking crates.io for wdpe-macros v$MACROS_VERSION..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "User-Agent: wdpe-ci (https://github.com/EATSTEAK/wdpe)" "https://crates.io/api/v1/crates/wdpe-macros/$MACROS_VERSION")
+          echo "crates.io responded with HTTP $STATUS"
           if [ "$STATUS" = "200" ]; then
             echo "skip=true" >> $GITHUB_OUTPUT
             echo "wdpe-macros v$MACROS_VERSION is already published, skipping."
           else
             echo "skip=false" >> $GITHUB_OUTPUT
-            echo "wdpe-macros v$MACROS_VERSION not found on crates.io, will publish."
+            echo "wdpe-macros v$MACROS_VERSION not found on crates.io (HTTP $STATUS), will publish."
           fi
 
       - name: Publish wdpe-macros
