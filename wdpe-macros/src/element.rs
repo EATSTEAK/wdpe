@@ -208,18 +208,12 @@ fn derive_wd_element_inner(input: TokenStream) -> Result<TokenStream> {
                     self.#lsdata_field.get_or_init(|| {
                         let lsdata_attr = self.#element_ref_field.value().attr("lsdata").unwrap_or("");
                         let Ok(lsdata_obj) = crate::element::utils::parse_lsdata(lsdata_attr)
-                            .or_else(|e| {
-                                tracing::warn!(?e, "failed to parse lsdata");
-                                Err(e)
-                            })
+                            .inspect_err(|e| tracing::warn!(?e, "failed to parse lsdata"))
                         else {
                             return #lsdata_type::default();
                         };
                         serde_json::from_value::<Self::ElementLSData>(lsdata_obj)
-                            .or_else(|e| {
-                                tracing::warn!(?e, "failed to convert lsdata to struct");
-                                Err(e)
-                            })
+                            .inspect_err(|e| tracing::warn!(?e, "failed to convert lsdata to struct"))
                             .ok()
                             .unwrap_or(#lsdata_type::default())
                     })
@@ -276,10 +270,7 @@ fn derive_wd_element_inner(input: TokenStream) -> Result<TokenStream> {
                         .get_or_init(|| {
                             let lsevents_attr = self.#element_ref_field.value().attr("lsevents").unwrap_or("");
                             crate::element::utils::parse_lsevents(lsevents_attr)
-                                .or_else(|e| {
-                                    tracing::warn!(?e, "failed to parse lsevents");
-                                    Err(e)
-                                })
+                                .inspect_err(|e| tracing::warn!(?e, "failed to parse lsevents"))
                                 .ok()
                         })
                         .as_ref()

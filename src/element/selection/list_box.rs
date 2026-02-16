@@ -78,7 +78,7 @@ macro_rules! def_listbox_subset {
                 self.list_box().lsdata
                     .get_or_init(|| {
                         let lsdata_attr = self.element_ref().value().attr("lsdata").unwrap_or("");
-                        let Ok(lsdata_obj) = $crate::element::utils::parse_lsdata(lsdata_attr).or_else(|e| { tracing::warn!(?e, "failed to parse lsdata"); Err(e) }) else {
+                        let Ok(lsdata_obj) = $crate::element::utils::parse_lsdata(lsdata_attr).inspect_err(|e| tracing::warn!(?e, "failed to parse lsdata")) else {
                             return ListBoxLSData::default();
                         };
                         serde_json::from_value::<Self::ElementLSData>(lsdata_obj).unwrap_or(ListBoxLSData::default())
@@ -111,7 +111,7 @@ macro_rules! def_listbox_subset {
                 self.list_box().lsevents
                     .get_or_init(|| {
                         let lsevents_attr = self.list_box().element_ref.value().attr("lsevents").unwrap_or("");
-                        $crate::element::utils::parse_lsevents(lsevents_attr).or_else(|e| { tracing::warn!(?e, "failed to parse lsevents"); Err(e) }).ok()
+                        $crate::element::utils::parse_lsevents(lsevents_attr).inspect_err(|e| tracing::warn!(?e, "failed to parse lsevents")).ok()
                     })
                     .as_ref()
             }
