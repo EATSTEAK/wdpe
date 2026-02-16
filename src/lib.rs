@@ -168,7 +168,9 @@ pub mod body;
 /// reqwest를 사용한 WebDynpro 클라이언트의 HTTP 요청 기능
 pub mod requests;
 
+#[cfg(feature = "element")]
 pub use scraper;
 
 // Re-export proc-macros from wdpe-macros
+#[cfg(feature = "element")]
 pub use wdpe_macros::{WdElement, WdLsData, WdSubElement, wd_event};

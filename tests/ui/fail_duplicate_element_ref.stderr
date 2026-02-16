@@ -1,0 +1,5 @@
+error: WdElement found multiple fields with #[wd_element(element_ref)]; exactly one is required
+  --> tests/ui/fail_duplicate_element_ref.rs:16:12
+   |
+16 | pub struct DupElement<'a> {
+   |            ^^^^^^^^^^

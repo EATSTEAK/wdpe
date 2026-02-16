@@ -1,0 +1,5 @@
+error: Field marked with #[wd_element(lsevents_field)] has no effect without #[wd_element(interactable)]. Either add #[wd_element(interactable)] or remove the lsevents_field annotation.
+  --> tests/ui/fail_lsevents_without_interactable.rs:17:12
+   |
+17 | pub struct EvElement<'a> {
+   |            ^^^^^^^^^

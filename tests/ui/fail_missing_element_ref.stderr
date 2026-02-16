@@ -1,0 +1,5 @@
+error: WdElement requires exactly one field with #[wd_element(element_ref)]
+  --> tests/ui/fail_missing_element_ref.rs:16:12
+   |
+16 | pub struct BadElement<'a> {
+   |            ^^^^^^^^^^
