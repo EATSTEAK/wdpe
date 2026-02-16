@@ -20,7 +20,7 @@ ureq = ["dep:ureq"]
 
 [dependencies]
 inventory = { version = "0.3", optional = true }
-wdpe-macros = { path = "wdpe-macros", optional = true }
+wdpe-macros = { version = "=0.1.0", path = "wdpe-macros", optional = true }
 custom_debug_derive = "0.6"
 derive_builder = "0.20"
 html-escape = "0.2"
