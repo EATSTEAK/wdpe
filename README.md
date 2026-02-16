@@ -3,6 +3,55 @@
 WDPE는 WebDynpro 페이지 스크래핑과 입력 조작을 위한 기반 엔진입니다.
 WebDynpro 의 Lightspeed 라이브러리를 통해 구현되는 페이지에 대한 분석을 수행할 수 있습니다.
 
+## 엘리먼트 정의 시스템
+
+WDPE는 `wdpe-macros` proc-macro crate를 통해 WebDynpro 엘리먼트를 선언적으로 정의합니다.
+
+| Derive / Attribute        | 용도                                                                            |
+| ------------------------- | ------------------------------------------------------------------------------- |
+| `#[derive(WdElement)]`    | 엘리먼트 struct, Definition, `Element` trait, `inventory` 자동 등록 생성        |
+| `#[derive(WdLsData)]`     | LsData struct의 serde `Deserialize`, `Clone`, `Debug`, `Default`, accessor 생성 |
+| `#[derive(WdSubElement)]` | 서브 엘리먼트 struct, Definition, `SubElement` trait 생성                       |
+| `#[wd_event]`             | 이벤트 발생 메서드 body 자동 생성                                               |
+
+### 새 엘리먼트 추가 예시
+
+```rust,ignore
+use std::{borrow::Cow, cell::OnceCell};
+use wdpe::{WdElement, WdLsData, wd_event};
+
+#[derive(WdLsData)]
+#[allow(unused)]
+pub struct ButtonLSData {
+    #[wd_lsdata(index = "0")]
+    text: Option<String>,
+    #[wd_lsdata(index = "1")]
+    enabled: Option<bool>,
+}
+
+#[derive(WdElement)]
+#[wd_element(control_id = "B", element_name = "Button")]
+#[wd_element(interactable)]
+#[wd_element(def = "ButtonDef", def_doc = "[`Button`]의 정의")]
+#[wd_element(lsdata = "ButtonLSData")]
+pub struct Button<'a> {
+    id: Cow<'static, str>,
+    #[wd_element(element_ref)]
+    element_ref: scraper::ElementRef<'a>,
+    #[wd_element(lsdata_field)]
+    lsdata: OnceCell<ButtonLSData>,
+    #[wd_element(lsevents_field)]
+    lsevents: OnceCell<Option<wdpe::element::EventParameterMap>>,
+}
+
+impl<'a> Button<'a> {
+    #[wd_event(name = "Press")]
+    pub fn press(&self) {}
+}
+```
+
+파일을 생성하고 모듈에 추가하면 `inventory` crate를 통해 자동으로 등록됩니다. 수동 등록이 필요하지 않습니다.
+
 ## WebDynpro 페이지 분석하기
 
 직접 WebDynpro 페이지를 분석하여 이에 대한 자동화된 애플리케이션을 구현하려면, 애플리케이션에서 조작하고자 하는 주요 요소들에 대해 정의하는 작업이 선행되어야 합니다.

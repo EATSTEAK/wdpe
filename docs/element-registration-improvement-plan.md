@@ -1,5 +1,8 @@
 # Element Registration Improvement Plan — Proc-Macro + Inventory
 
+> **Status: ✅ Completed** — All four phases have been implemented and merged.
+> This document is retained as an architectural decision record (ADR).
+
 ## Completion Status
 
 ✅ **Phase 1**: Created `wdpe-macros` proc-macro crate with `WdLsData`, `WdElement`, `WdSubElement`, `wd_event` derives
@@ -9,14 +12,19 @@
 
 ### Elements NOT migrated (by design)
 
-- `Custom` — pseudo-element with no DOM representation
-- `Unknown` — fallback element with `serde_json::Value` LsData
-- `ClientInspector` — asymmetric Serialize/Deserialize serde requirements
-- ListBox variants — use `def_listbox_subset!` macro for shared inner struct pattern
+- `Custom` — pseudo-element with no DOM representation; uses `()` as `ElementLSData`
+- `Unknown` — fallback element with `serde_json::Value` LsData; serves as catch-all
+- `ClientInspector` — asymmetric Serialize/Deserialize serde requirements (`rename_all(serialize = "PascalCase")` + per-field `rename(deserialize = "N")`)
+- ListBox variants — use `def_listbox_subset!` macro for shared inner struct (newtype) pattern
+
+### Future Considerations
+
+- `element_wrapper_impls!` macro still generates `ElementWrapper` and `ElementDefWrapper` enums statically. This could be replaced with an inventory-based approach to fully eliminate manual enum synchronization, at the cost of losing static dispatch.
+- `trybuild` tests for proc-macro error cases (happy path + compile-error tests)
 
 ---
 
-## 1. Executive Summary
+## 1. Executive Summary (Historical)
 
 The `wdpe` (WebDynpro Parse Engine) crate currently uses 4 layered `macro_rules!` macros to define ~30 WebDynpro UI elements. While functional, this approach suffers from:
 
