@@ -1,4 +1,4 @@
-use crate::body::{Body, BodyUpdate};
+use crate::body::{Body, BodyUpdate, BodyUpdateResult};
 use crate::error::{ClientError, WebDynproError};
 use crate::event::{
     Event,
@@ -55,7 +55,7 @@ impl WebDynproState {
     }
 
     /// Body에 BodyUpdate를 적용합니다.
-    pub fn mutate_body(&mut self, update: BodyUpdate) -> Result<(), WebDynproError> {
+    pub fn mutate_body(&mut self, update: BodyUpdate) -> Result<BodyUpdateResult, WebDynproError> {
         Ok(self.body.apply(update)?)
     }
 
@@ -112,5 +112,5 @@ pub enum EventProcessResult {
     /// 전달받은 이벤트가 큐에 추가되었을 경우
     Enqueued,
     /// 전달받은 이벤트가 큐에 추가된 후 서버에 전송되었을 경우
-    Sent,
+    Sent(BodyUpdateResult),
 }
