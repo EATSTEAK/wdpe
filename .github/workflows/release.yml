@@ -57,12 +57,27 @@ jobs:
       - name: Retrieve cache
         uses: Leafwing-Studios/cargo-cache@v2
 
+      - name: Check if wdpe-macros version is already published
+        id: check_macros
+        run: |
+          MACROS_VERSION=$(yq '.package.version' wdpe-macros/Cargo.toml)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://crates.io/api/v1/crates/wdpe-macros/$MACROS_VERSION")
+          if [ "$STATUS" = "200" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "wdpe-macros v$MACROS_VERSION is already published, skipping."
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "wdpe-macros v$MACROS_VERSION not found on crates.io, will publish."
+          fi
+
       - name: Publish wdpe-macros
+        if: steps.check_macros.outputs.skip != 'true'
         run: cargo publish --verbose -p wdpe-macros
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
 
       - name: Wait for wdpe-macros to be available on crates.io
+        if: steps.check_macros.outputs.skip != 'true'
         run: sleep 30
 
       - name: Publish wdpe
