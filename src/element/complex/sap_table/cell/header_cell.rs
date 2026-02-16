@@ -3,54 +3,79 @@ use std::{borrow::Cow, cell::OnceCell};
 use scraper::Selector;
 
 use crate::{
+    WdLsData, WdSubElement,
     element::{
         ElementDefWrapper,
-        complex::{
-            SapTable,
-            sap_table::{
-                SapTableDef,
-                property::{
-                    SapTableHeaderCellDesign, SapTableHeaderCellType,
-                    SapTableRowSelectionMassState, SapTableSelectionColumnAction,
-                },
-            },
+        complex::sap_table::property::{
+            SapTableHeaderCellDesign, SapTableHeaderCellType, SapTableRowSelectionMassState,
+            SapTableSelectionColumnAction,
         },
         property::SortState,
-        sub::macros::define_subelement,
     },
     error::BodyError,
 };
 
 use super::{SapTableCell, SapTableCellWrapper};
 
-define_subelement! {
-    #[doc = "[`SapTable`]의 헤더 셀"]
-    SapTableHeaderCell<SapTable, SapTableDef, "HC", "SapTableHeaderCell"> {
-        content: OnceCell<Option<ElementDefWrapper<'a>>>
-    },
-    #[doc = "[`SapTableHeaderCell`]의 정의"]
-    SapTableHeaderCellDef,
-    #[doc = "[`SapTableHeaderCell`] 내부 데이터"]
-    SapTableHeaderCellLSData {
-        sort_state: SortState => "0",
-        header_cell_design: SapTableHeaderCellDesign => "1",
-        header_cell_type: SapTableHeaderCellType => "2",
-        selection_column_action: SapTableSelectionColumnAction => "3",
-        selection_menu_id: String => "4",
-        row_selection_mass_state: SapTableRowSelectionMassState => "5",
-        required: bool => "6",
-        tooltip: String => "7",
-        column_selected: bool => "8",
-        column_selectable: bool => "9",
-        filtered: bool => "10",
-        mark_totals: bool => "11",
-        accessibility_description: String => "12",
-        icon_tooltip: String => "13",
-        icon_first: bool => "14",
-        icon_enabled: bool => "15",
-        custom_style: String => "16",
-        custom_data: String => "17",
-    }
+#[doc = "[`SapTableHeaderCell`] 내부 데이터"]
+#[derive(WdLsData)]
+#[allow(unused)]
+pub struct SapTableHeaderCellLSData {
+    #[wd_lsdata(index = "0")]
+    sort_state: Option<SortState>,
+    #[wd_lsdata(index = "1")]
+    header_cell_design: Option<SapTableHeaderCellDesign>,
+    #[wd_lsdata(index = "2")]
+    header_cell_type: Option<SapTableHeaderCellType>,
+    #[wd_lsdata(index = "3")]
+    selection_column_action: Option<SapTableSelectionColumnAction>,
+    #[wd_lsdata(index = "4")]
+    selection_menu_id: Option<String>,
+    #[wd_lsdata(index = "5")]
+    row_selection_mass_state: Option<SapTableRowSelectionMassState>,
+    #[wd_lsdata(index = "6")]
+    required: Option<bool>,
+    #[wd_lsdata(index = "7")]
+    tooltip: Option<String>,
+    #[wd_lsdata(index = "8")]
+    column_selected: Option<bool>,
+    #[wd_lsdata(index = "9")]
+    column_selectable: Option<bool>,
+    #[wd_lsdata(index = "10")]
+    filtered: Option<bool>,
+    #[wd_lsdata(index = "11")]
+    mark_totals: Option<bool>,
+    #[wd_lsdata(index = "12")]
+    accessibility_description: Option<String>,
+    #[wd_lsdata(index = "13")]
+    icon_tooltip: Option<String>,
+    #[wd_lsdata(index = "14")]
+    icon_first: Option<bool>,
+    #[wd_lsdata(index = "15")]
+    icon_enabled: Option<bool>,
+    #[wd_lsdata(index = "16")]
+    custom_style: Option<String>,
+    #[wd_lsdata(index = "17")]
+    custom_data: Option<String>,
+}
+
+#[doc = "[`SapTable`](crate::element::complex::SapTable)의 헤더 셀"]
+#[derive(WdSubElement, custom_debug_derive::Debug)]
+#[wd_element(parent = "SapTable", parent_def = "SapTableDef")]
+#[wd_element(subcontrol_id = "HC", element_name = "SapTableHeaderCell")]
+#[wd_element(
+    def = "SapTableHeaderCellDef",
+    def_doc = "[`SapTableHeaderCell`]의 정의"
+)]
+#[wd_element(lsdata = "SapTableHeaderCellLSData")]
+pub struct SapTableHeaderCell<'a> {
+    id: Cow<'static, str>,
+    #[wd_element(element_ref)]
+    #[debug(skip)]
+    element_ref: scraper::ElementRef<'a>,
+    #[wd_element(lsdata_field)]
+    lsdata: OnceCell<SapTableHeaderCellLSData>,
+    content: OnceCell<Option<ElementDefWrapper<'a>>>,
 }
 
 impl<'a> SapTableCell<'a> for SapTableHeaderCell<'a> {
@@ -74,18 +99,10 @@ impl<'a> SapTableCell<'a> for SapTableHeaderCell<'a> {
 }
 
 impl<'a> SapTableHeaderCell<'a> {
-    /// HTML 엘리먼트로부터 [`SapTableHeaderCell`]을 생성합니다.
-    pub const fn new(id: Cow<'static, str>, element_ref: scraper::ElementRef<'a>) -> Self {
-        Self {
-            id,
-            element_ref,
-            lsdata: OnceCell::new(),
-            content: OnceCell::new(),
-        }
-    }
-
     /// 셀을 [`SapTableCellWrapper`]로 감쌉니다.
     pub fn wrap(self) -> SapTableCellWrapper<'a> {
         SapTableCellWrapper::Header(self)
     }
 }
+
+use crate::element::complex::{SapTable, SapTableDef};

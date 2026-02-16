@@ -1,7 +1,8 @@
 use std::{borrow::Cow, cell::OnceCell};
 
 use crate::{
-    element::{ElementWrapper, macros::define_element_base},
+    WdElement, WdLsData,
+    element::ElementWrapper,
     error::{ElementError, WebDynproError},
 };
 
@@ -79,71 +80,47 @@ impl ListBoxItemInfo {
     }
 }
 
-define_element_base! {
-    #[doc = "[`ListBox`](crate::element::selection::list_box::ListBox)의 일반 아이템"]
-    ListBoxItem<"LIB_I", "ListBoxItem"> {
-        index: OnceCell<Option<&'a str>>,
-        key: OnceCell<Option<&'a str>>,
-        tooltip: OnceCell<Option<&'a str>>,
-        value1: OnceCell<Option<&'a str>>,
-        value2: OnceCell<Option<&'a str>>,
-        selected: OnceCell<Option<bool>>,
-        icon_tooltip: OnceCell<Option<&'a str>>,
-        enabled: OnceCell<Option<bool>>,
-        group_title: OnceCell<Option<&'a str>>,
-        title: OnceCell<&'a str>,
-    },
-    #[doc = "[`ListBoxItem`]의 정의"]
-    ListBoxItemDef,
-    #[doc = "[`ListBoxItem`] 내부 데이터"]
-    ListBoxItemLSData {
-        icon_src: String => "0",
-        disabled_icon_src: String => "1",
-        semantic_text_color: String => "2",
-        is_deletable: bool => "3",
-        custom_data: String => "4",
-    }
+#[doc = "[`ListBoxItem`] 내부 데이터"]
+#[derive(WdLsData)]
+#[allow(unused)]
+pub struct ListBoxItemLSData {
+    #[wd_lsdata(index = "0")]
+    icon_src: Option<String>,
+    #[wd_lsdata(index = "1")]
+    disabled_icon_src: Option<String>,
+    #[wd_lsdata(index = "2")]
+    semantic_text_color: Option<String>,
+    #[wd_lsdata(index = "3")]
+    is_deletable: Option<bool>,
+    #[wd_lsdata(index = "4")]
+    custom_data: Option<String>,
 }
 
-/* impl<'a> std::fmt::Debug for ListBoxItem<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ListBoxItem")
-            .field("id", &self.id())
-            .field("lsdata", &self.lsdata())
-            .field("index", &self.index())
-            .field("key", &self.key())
-            .field("tooltip", &self.tooltip())
-            .field("value1", &self.value1())
-            .field("value2", &self.value2())
-            .field("selected", &self.selected())
-            .field("icon_tooltip", &self.icon_tooltip())
-            .field("enabled", &self.enabled())
-            .field("group_title", &self.group_title())
-            .field("title", &self.title())
-            .finish()
-    }
-} */
+#[doc = "[`ListBox`](crate::element::selection::list_box::ListBox)의 일반 아이템"]
+#[derive(WdElement, custom_debug_derive::Debug)]
+#[wd_element(control_id = "LIB_I", element_name = "ListBoxItem")]
+#[wd_element(def = "ListBoxItemDef", def_doc = "[`ListBoxItem`]의 정의")]
+#[wd_element(lsdata = "ListBoxItemLSData")]
+pub struct ListBoxItem<'a> {
+    id: Cow<'static, str>,
+    #[wd_element(element_ref)]
+    #[debug(skip)]
+    element_ref: scraper::ElementRef<'a>,
+    #[wd_element(lsdata_field)]
+    lsdata: OnceCell<ListBoxItemLSData>,
+    index: OnceCell<Option<&'a str>>,
+    key: OnceCell<Option<&'a str>>,
+    tooltip: OnceCell<Option<&'a str>>,
+    value1: OnceCell<Option<&'a str>>,
+    value2: OnceCell<Option<&'a str>>,
+    selected: OnceCell<Option<bool>>,
+    icon_tooltip: OnceCell<Option<&'a str>>,
+    enabled: OnceCell<Option<bool>>,
+    group_title: OnceCell<Option<&'a str>>,
+    title: OnceCell<&'a str>,
+}
 
 impl<'a> ListBoxItem<'a> {
-    /// HTML 엘리먼트로부터 새로운 [`ListBoxItem`]을 생성합니다.
-    pub fn new(id: Cow<'static, str>, element_ref: scraper::ElementRef<'a>) -> Self {
-        Self {
-            id,
-            element_ref,
-            lsdata: OnceCell::new(),
-            title: OnceCell::new(),
-            index: OnceCell::new(),
-            key: OnceCell::new(),
-            tooltip: OnceCell::new(),
-            value1: OnceCell::new(),
-            value2: OnceCell::new(),
-            selected: OnceCell::new(),
-            icon_tooltip: OnceCell::new(),
-            enabled: OnceCell::new(),
-            group_title: OnceCell::new(),
-        }
-    }
-
     /// 인덱스를 반환합니다.
     pub fn index(&self) -> Option<&str> {
         self.index

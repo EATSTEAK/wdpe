@@ -1,3 +1,7 @@
+// NOTE: Not migrated to #[derive(WdElement)] because Custom is a pseudo-element
+// with no DOM representation. It has no element_ref (panics on access),
+// uses () as ElementLSData, and is only constructed programmatically.
+
 use std::{borrow::Cow, collections::HashMap};
 
 use crate::{
@@ -182,4 +186,13 @@ impl Custom {
             .build()
             .unwrap()
     }
+}
+
+inventory::submit! {
+    crate::element::registry::ElementRegistration::new(
+        "CUSTOM",
+        |id, _element_ref| {
+            Ok(crate::element::ElementWrapper::Custom(Custom::new(std::borrow::Cow::Owned(id))))
+        },
+    )
 }

@@ -57,6 +57,14 @@ jobs:
       - name: Retrieve cache
         uses: Leafwing-Studios/cargo-cache@v2
 
+      - name: Publish wdpe-macros
+        run: cargo publish --verbose -p wdpe-macros
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+      - name: Wait for wdpe-macros to be available on crates.io
+        run: sleep 30
+
       - name: Publish wdpe
         run: cargo publish --verbose
         env:

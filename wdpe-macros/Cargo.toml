@@ -1,0 +1,17 @@
+[package]
+name = "wdpe-macros"
+version = "0.1.0"
+edition = "2024"
+description = "Procedural macros for WebDynpro Parse Engine (wdpe)"
+keywords = ["webdynpro", "sap", "macros"]
+authors = ["Hyomin Koo <me@eatsteak.dev>"]
+license = "MIT"
+repository = "https://github.com/EATSTEAK/wdpe"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { version = "2", features = ["full", "extra-traits"] }
+quote = "1"
+proc-macro2 = "1"

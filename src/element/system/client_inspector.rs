@@ -1,3 +1,9 @@
+// NOTE: Not migrated to #[derive(WdElement)] / #[derive(WdLsData)] because
+// ClientInspectorLSData requires both Serialize and Deserialize with asymmetric
+// rename rules (rename_all(serialize = "PascalCase") + per-field rename(deserialize = "N")).
+// The WdLsData derive only handles Deserialize. Additionally, client_infos() builds
+// custom UCF parameters that don't follow the standard wd_event pattern.
+
 use std::{borrow::Cow, cell::OnceCell, collections::HashMap};
 
 use serde::{Deserialize, Serialize};
@@ -213,6 +219,18 @@ impl<'a> Interactable<'a> for ClientInspector<'a> {
             .get_or_init(|| parse_lsevents(self.element_ref.attr("lsevents")?).ok())
             .as_ref()
     }
+}
+
+inventory::submit! {
+    crate::element::registry::ElementRegistration::new(
+        "CI",
+        |id, element_ref| {
+            use crate::element::Element;
+            use crate::element::definition::ElementDefinition;
+            let def = ClientInspectorDef::new_dynamic(id);
+            Ok(ClientInspector::from_ref(&def, element_ref)?.wrap())
+        },
+    )
 }
 
 impl<'a> ClientInspector<'a> {

@@ -1,8 +1,8 @@
 use std::{borrow::Cow, cell::OnceCell};
 
-use crate::element::{
-    macros::define_element_interactable,
-    property::{ScrollingMode, Visibility},
+use crate::{
+    WdElement, WdLsData,
+    element::property::{ScrollingMode, Visibility},
 };
 
 use self::property::TrayDesign;
@@ -19,49 +19,74 @@ pub mod property {
 }
 
 // TODO: Implement additional events and data
-define_element_interactable! {
-    #[doc = "열고 닫을 수 있는 트레이"]
-    Tray<"TY", "Tray"> {},
-    #[doc = "[`Tray`]의 정의"]
-    TrayDef,
-    #[doc = "[`Tray`] 내부 데이터"]
-    TrayLSData {
-        title: String => "0",
-        design: TrayDesign => "1",
-        collapsed: bool => "2",
-        enabled: bool => "3",
-        tooltip: String => "4",
-        height: String => "5",
-        content_height: String => "6",
-        has_option_menu: bool => "7",
-        option_menu_id: String => "8",
-        has_close_button: bool => "9",
-        scrolling_mode: ScrollingMode => "10",
-        has_toolbar: bool => "11",
-        is_collapsible: bool => "12",
-        accessibility_description: String => "13",
-        visibility: Visibility => "14",
-        default_button_id: String => "15",
-        scroll_top: i32 => "16",
-        scroll_left: i32 => "17",
-        access_key: String => "18",
-        hotkeys_id: String => "19",
-        is_drag_handle: bool => "20",
-        client_select: bool => "21",
-        heading_level: i32 => "22",
-        custom_data: String => "23",
-        custom_style: String => "24",
-    }
+#[doc = "[`Tray`] 내부 데이터"]
+#[derive(WdLsData)]
+#[allow(unused)]
+pub struct TrayLSData {
+    #[wd_lsdata(index = "0")]
+    title: Option<String>,
+    #[wd_lsdata(index = "1")]
+    design: Option<TrayDesign>,
+    #[wd_lsdata(index = "2")]
+    collapsed: Option<bool>,
+    #[wd_lsdata(index = "3")]
+    enabled: Option<bool>,
+    #[wd_lsdata(index = "4")]
+    tooltip: Option<String>,
+    #[wd_lsdata(index = "5")]
+    height: Option<String>,
+    #[wd_lsdata(index = "6")]
+    content_height: Option<String>,
+    #[wd_lsdata(index = "7")]
+    has_option_menu: Option<bool>,
+    #[wd_lsdata(index = "8")]
+    option_menu_id: Option<String>,
+    #[wd_lsdata(index = "9")]
+    has_close_button: Option<bool>,
+    #[wd_lsdata(index = "10")]
+    scrolling_mode: Option<ScrollingMode>,
+    #[wd_lsdata(index = "11")]
+    has_toolbar: Option<bool>,
+    #[wd_lsdata(index = "12")]
+    is_collapsible: Option<bool>,
+    #[wd_lsdata(index = "13")]
+    accessibility_description: Option<String>,
+    #[wd_lsdata(index = "14")]
+    visibility: Option<Visibility>,
+    #[wd_lsdata(index = "15")]
+    default_button_id: Option<String>,
+    #[wd_lsdata(index = "16")]
+    scroll_top: Option<i32>,
+    #[wd_lsdata(index = "17")]
+    scroll_left: Option<i32>,
+    #[wd_lsdata(index = "18")]
+    access_key: Option<String>,
+    #[wd_lsdata(index = "19")]
+    hotkeys_id: Option<String>,
+    #[wd_lsdata(index = "20")]
+    is_drag_handle: Option<bool>,
+    #[wd_lsdata(index = "21")]
+    client_select: Option<bool>,
+    #[wd_lsdata(index = "22")]
+    heading_level: Option<i32>,
+    #[wd_lsdata(index = "23")]
+    custom_data: Option<String>,
+    #[wd_lsdata(index = "24")]
+    custom_style: Option<String>,
 }
 
-impl<'a> Tray<'a> {
-    /// HTML 엘리먼트로부터 새로운 [`Tray`] 엘리먼트를 생성합니다.
-    pub const fn new(id: Cow<'static, str>, element_ref: scraper::ElementRef<'a>) -> Self {
-        Self {
-            id,
-            element_ref,
-            lsdata: OnceCell::new(),
-            lsevents: OnceCell::new(),
-        }
-    }
+#[doc = "열고 닫을 수 있는 트레이"]
+#[derive(WdElement)]
+#[wd_element(control_id = "TY", element_name = "Tray")]
+#[wd_element(interactable)]
+#[wd_element(def = "TrayDef", def_doc = "[`Tray`]의 정의")]
+#[wd_element(lsdata = "TrayLSData")]
+pub struct Tray<'a> {
+    id: Cow<'static, str>,
+    #[wd_element(element_ref)]
+    element_ref: scraper::ElementRef<'a>,
+    #[wd_element(lsdata_field)]
+    lsdata: OnceCell<TrayLSData>,
+    #[wd_element(lsevents_field)]
+    lsevents: OnceCell<Option<crate::element::EventParameterMap>>,
 }

@@ -1,57 +1,64 @@
 use std::{borrow::Cow, cell::OnceCell};
 
-use super::macros::define_element_base;
-use super::property::{LockedDesign, Visibility};
+use crate::{
+    WdElement, WdLsData,
+    element::property::{LockedDesign, Visibility},
+};
 
-define_element_base! {
-    #[doc = "HTML `flow` 레이아웃"]
-    FlowLayout<"FL", "FlowLayout"> {},
-    #[doc = "[`FlowLayout`]의 정의"]
-    FlowLayoutDef,
-    #[doc = "[`FlowLayout`] 내부 데이터"]
-    FlowLayoutLSData {
-        visibility: Visibility => "0",
-        custom_data: String => "1"
-    }
+#[doc = "[`FlowLayout`] 내부 데이터"]
+#[derive(WdLsData)]
+#[allow(unused)]
+pub struct FlowLayoutLSData {
+    #[wd_lsdata(index = "0")]
+    visibility: Option<Visibility>,
+    #[wd_lsdata(index = "1")]
+    custom_data: Option<String>,
 }
 
-impl<'a> FlowLayout<'a> {
-    /// HTML 엘리먼트로부터 새로운 [`FlowLayout`] 엘리먼트를 생성합니다.
-    pub const fn new(id: Cow<'static, str>, element_ref: scraper::ElementRef<'a>) -> Self {
-        Self {
-            id,
-            element_ref,
-            lsdata: OnceCell::new(),
-        }
-    }
+#[doc = "HTML `flow` 레이아웃"]
+#[derive(WdElement)]
+#[wd_element(control_id = "FL", element_name = "FlowLayout")]
+#[wd_element(def = "FlowLayoutDef", def_doc = "[`FlowLayout`]의 정의")]
+#[wd_element(lsdata = "FlowLayoutLSData")]
+pub struct FlowLayout<'a> {
+    id: Cow<'static, str>,
+    #[wd_element(element_ref)]
+    element_ref: scraper::ElementRef<'a>,
+    #[wd_element(lsdata_field)]
+    lsdata: OnceCell<FlowLayoutLSData>,
 }
 
-define_element_base! {
-    #[doc = "가상 컨테이너"]
-    Container<"CO", "Container"> {},
-    #[doc = "[`Container`]의 정의"]
-    ContainerDef,
-    #[doc = "[`Container`] 내부 데이터"]
-    ContainerLSData {
-        locked: bool => "0",
-        printable: bool => "1",
-        print_area: bool => "2",
-        locked_design: LockedDesign => "3",
-        locked_message: String => "4",
-        custom_data: String => "5",
-        custom_style: String => "6"
-    }
+#[doc = "[`Container`] 내부 데이터"]
+#[derive(WdLsData)]
+#[allow(unused)]
+pub struct ContainerLSData {
+    #[wd_lsdata(index = "0")]
+    locked: Option<bool>,
+    #[wd_lsdata(index = "1")]
+    printable: Option<bool>,
+    #[wd_lsdata(index = "2")]
+    print_area: Option<bool>,
+    #[wd_lsdata(index = "3")]
+    locked_design: Option<LockedDesign>,
+    #[wd_lsdata(index = "4")]
+    locked_message: Option<String>,
+    #[wd_lsdata(index = "5")]
+    custom_data: Option<String>,
+    #[wd_lsdata(index = "6")]
+    custom_style: Option<String>,
 }
 
-impl<'a> Container<'a> {
-    /// HTML 엘리먼트로부터 새로운 [`Container`] 엘리먼트를 생성합니다.
-    pub const fn new(id: Cow<'static, str>, element_ref: scraper::ElementRef<'a>) -> Self {
-        Self {
-            id,
-            element_ref,
-            lsdata: OnceCell::new(),
-        }
-    }
+#[doc = "가상 컨테이너"]
+#[derive(WdElement)]
+#[wd_element(control_id = "CO", element_name = "Container")]
+#[wd_element(def = "ContainerDef", def_doc = "[`Container`]의 정의")]
+#[wd_element(lsdata = "ContainerLSData")]
+pub struct Container<'a> {
+    id: Cow<'static, str>,
+    #[wd_element(element_ref)]
+    element_ref: scraper::ElementRef<'a>,
+    #[wd_element(lsdata_field)]
+    lsdata: OnceCell<ContainerLSData>,
 }
 
 /// [`GridLayout`] 엘리먼트 모듈

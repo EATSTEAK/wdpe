@@ -3,41 +3,46 @@ use std::{borrow::Cow, cell::OnceCell, collections::HashMap};
 use scraper::Selector;
 
 use crate::{
-    element::{Interactable, definition::ElementDefinition, macros::define_element_interactable},
+    WdElement, WdLsData,
+    element::{Interactable, definition::ElementDefinition},
     error::{BodyError, ElementError, WebDynproError},
     event::Event,
 };
 
 use self::property::AccessType;
 
-define_element_interactable! {
-    #[doc = "테이블"]
-    SapTable<"ST", "SapTable"> {
-        table: OnceCell<Option<SapTableBody>>,
-    },
-    #[doc = "[`SapTable`]의 정의"]
-    SapTableDef,
-    #[doc = "[`SapTable`] 내부 데이터"]
-    SapTableLSData {
-        title_text: String => "0",
-        accessibility_description: String => "1",
-        row_count: u32 => "2",
-        col_count: u32 => "3",
-    }
+#[doc = "[`SapTable`] 내부 데이터"]
+#[derive(WdLsData)]
+#[allow(unused)]
+pub struct SapTableLSData {
+    #[wd_lsdata(index = "0")]
+    title_text: Option<String>,
+    #[wd_lsdata(index = "1")]
+    accessibility_description: Option<String>,
+    #[wd_lsdata(index = "2")]
+    row_count: Option<u32>,
+    #[wd_lsdata(index = "3")]
+    col_count: Option<u32>,
+}
+
+#[doc = "테이블"]
+#[derive(WdElement)]
+#[wd_element(control_id = "ST", element_name = "SapTable")]
+#[wd_element(interactable)]
+#[wd_element(def = "SapTableDef", def_doc = "[`SapTable`]의 정의")]
+#[wd_element(lsdata = "SapTableLSData")]
+pub struct SapTable<'a> {
+    id: Cow<'static, str>,
+    #[wd_element(element_ref)]
+    element_ref: scraper::ElementRef<'a>,
+    #[wd_element(lsdata_field)]
+    lsdata: OnceCell<SapTableLSData>,
+    #[wd_element(lsevents_field)]
+    lsevents: OnceCell<Option<crate::element::EventParameterMap>>,
+    table: OnceCell<Option<SapTableBody>>,
 }
 
 impl<'a> SapTable<'a> {
-    /// HTML 엘리먼트로부터 새로운 [`SapTable`] 엘리먼트를 생성합니다.
-    pub const fn new(id: Cow<'static, str>, element_ref: scraper::ElementRef<'a>) -> Self {
-        Self {
-            id,
-            element_ref,
-            lsdata: OnceCell::new(),
-            lsevents: OnceCell::new(),
-            table: OnceCell::new(),
-        }
-    }
-
     /// 테이블 내부 컨텐츠를 반환합니다.
     pub fn table(&self) -> Result<&SapTableBody, WebDynproError> {
         self.table

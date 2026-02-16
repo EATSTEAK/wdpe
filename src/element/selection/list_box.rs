@@ -1,8 +1,7 @@
 use std::{borrow::Cow, cell::OnceCell};
 
-use serde::Deserialize;
-
 use crate::{
+    WdLsData,
     element::{ElementDefWrapper, EventParameterMap},
     error::WebDynproError,
 };
@@ -79,7 +78,7 @@ macro_rules! def_listbox_subset {
                 self.list_box().lsdata
                     .get_or_init(|| {
                         let lsdata_attr = self.element_ref().value().attr("lsdata").unwrap_or("");
-                        let Ok(lsdata_obj) = $crate::element::utils::parse_lsdata(lsdata_attr).or_else(|e| { tracing::warn!(?e, "failed to parse lsdata"); Err(e) }) else {
+                        let Ok(lsdata_obj) = $crate::element::utils::parse_lsdata(lsdata_attr).inspect_err(|e| tracing::warn!(?e, "failed to parse lsdata")) else {
                             return ListBoxLSData::default();
                         };
                         serde_json::from_value::<Self::ElementLSData>(lsdata_obj).unwrap_or(ListBoxLSData::default())
@@ -112,7 +111,7 @@ macro_rules! def_listbox_subset {
                 self.list_box().lsevents
                     .get_or_init(|| {
                         let lsevents_attr = self.list_box().element_ref.value().attr("lsevents").unwrap_or("");
-                        $crate::element::utils::parse_lsevents(lsevents_attr).or_else(|e| { tracing::warn!(?e, "failed to parse lsevents"); Err(e) }).ok()
+                        $crate::element::utils::parse_lsevents(lsevents_attr).inspect_err(|e| tracing::warn!(?e, "failed to parse lsevents")).ok()
                     })
                     .as_ref()
             }
@@ -123,6 +122,18 @@ macro_rules! def_listbox_subset {
             pub const fn new(id: std::borrow::Cow<'static, str>, element_ref: scraper::ElementRef<'a>) -> Self {
                 Self($crate::element::selection::list_box::ListBox::new(id, element_ref))
             }
+        }
+
+        inventory::submit! {
+            $crate::element::registry::ElementRegistration::new(
+                $id,
+                |id, element_ref| {
+                    use $crate::element::Element;
+                    use $crate::element::definition::ElementDefinition;
+                    let def = $def_name::new_dynamic(id);
+                    Ok($name::from_ref(&def, element_ref)?.wrap())
+                },
+            )
         }
     )+
 
@@ -236,66 +247,66 @@ def_listbox_subset![
 ];
 
 /// [`ListBox`] 내부 데이터
-#[derive(Deserialize, Debug, Default)]
+#[derive(WdLsData)]
 #[allow(unused)]
 pub struct ListBoxLSData {
-    #[serde(rename = "0")]
+    #[wd_lsdata(index = "0")]
     width: Option<String>,
-    #[serde(rename = "1")]
+    #[wd_lsdata(index = "1")]
     visible_items: Option<i32>,
-    #[serde(rename = "2")]
+    #[wd_lsdata(index = "2")]
     height: Option<String>,
-    #[serde(rename = "3")]
+    #[wd_lsdata(index = "3")]
     invalid: Option<bool>,
-    #[serde(rename = "4")]
+    #[wd_lsdata(index = "4")]
     enabled: Option<bool>,
-    #[serde(rename = "5")]
+    #[wd_lsdata(index = "5")]
     readonly: Option<bool>,
-    #[serde(rename = "6")]
+    #[wd_lsdata(index = "6")]
     multiple_selection: Option<bool>,
-    #[serde(rename = "7")]
+    #[wd_lsdata(index = "7")]
     required: Option<bool>,
-    #[serde(rename = "8")]
+    #[wd_lsdata(index = "8")]
     is_popup: Option<bool>,
-    #[serde(rename = "9")]
+    #[wd_lsdata(index = "9")]
     icon_visibility: Option<String>,
-    #[serde(rename = "10")]
+    #[wd_lsdata(index = "10")]
     first_value_visibility: Option<String>,
-    #[serde(rename = "11")]
+    #[wd_lsdata(index = "11")]
     second_value_visibility: Option<String>,
-    #[serde(rename = "12")]
+    #[wd_lsdata(index = "12")]
     visibility: Option<String>,
-    #[serde(rename = "13")]
+    #[wd_lsdata(index = "13")]
     input_state: Option<String>,
-    #[serde(rename = "14")]
+    #[wd_lsdata(index = "14")]
     drag_source_info: Option<String>,
-    #[serde(rename = "15")]
+    #[wd_lsdata(index = "15")]
     drop_target_info: Option<String>,
-    #[serde(rename = "16")]
+    #[wd_lsdata(index = "16")]
     scroll_top: Option<i32>,
-    #[serde(rename = "17")]
+    #[wd_lsdata(index = "17")]
     access_key: Option<String>,
-    #[serde(rename = "18")]
+    #[wd_lsdata(index = "18")]
     available: Option<bool>,
-    #[serde(rename = "19")]
+    #[wd_lsdata(index = "19")]
     server_filter: Option<String>,
-    #[serde(rename = "20")]
+    #[wd_lsdata(index = "20")]
     complete: Option<bool>,
-    #[serde(rename = "21")]
+    #[wd_lsdata(index = "21")]
     filtered: Option<bool>,
-    #[serde(rename = "22")]
+    #[wd_lsdata(index = "22")]
     table_data_definition: Option<String>,
-    #[serde(rename = "23")]
+    #[wd_lsdata(index = "23")]
     item_table_data: Option<String>,
-    #[serde(rename = "24")]
+    #[wd_lsdata(index = "24")]
     history_table_data: Option<String>,
-    #[serde(rename = "25")]
+    #[wd_lsdata(index = "25")]
     custom_data: Option<String>,
-    #[serde(rename = "26")]
+    #[wd_lsdata(index = "26")]
     custom_style: Option<String>,
-    #[serde(rename = "27")]
+    #[wd_lsdata(index = "27")]
     table_data_item_design: Option<String>,
-    #[serde(rename = "28")]
+    #[wd_lsdata(index = "28")]
     labelled_by: Option<String>,
 }
 

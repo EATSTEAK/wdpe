@@ -2,40 +2,59 @@ use std::{borrow::Cow, cell::OnceCell};
 
 use scraper::Selector;
 
-use crate::element::{
-    ElementDefWrapper,
-    complex::{
-        SapTable,
-        sap_table::{
-            SapTableDef,
-            property::{SapTableCellDesign, SapTableHierarchicalCellStatus},
-        },
+use crate::{
+    WdLsData, WdSubElement,
+    element::{
+        ElementDefWrapper,
+        complex::sap_table::property::{SapTableCellDesign, SapTableHierarchicalCellStatus},
     },
-    sub::macros::define_subelement,
 };
 
 use super::{SapTableCell, SapTableCellWrapper};
 
-define_subelement! {
-    #[doc = "계층적 [`SapTable`]의 셀"]
-    SapTableHierarchicalCell<SapTable, SapTableDef, "HIC", "SapTableHierarchicalCell"> {
-        content: OnceCell<Option<ElementDefWrapper<'a>>>
-    },
-    #[doc = "[`SapTableHierarchicalCell`]의 정의"]
-    SapTableHierarchicalCellDef,
-    #[doc = "[`SapTableHierarchicalCell`] 내부 데이터"]
-    SapTableHierarchicalCellLSData {
-        is_selected: bool => "0",
-        is_secondary_selected: bool => "1",
-        cell_design: SapTableCellDesign => "2",
-        header_cell_ids: String => "3",
-        level: i32 => "4",
-        status: SapTableHierarchicalCellStatus => "5",
-        status_enabled: bool => "6",
-        content_type_tooltip: String => "7",
-        custom_style: String => "8",
-        custom_data: String => "9",
-    }
+#[doc = "[`SapTableHierarchicalCell`] 내부 데이터"]
+#[derive(WdLsData)]
+#[allow(unused)]
+pub struct SapTableHierarchicalCellLSData {
+    #[wd_lsdata(index = "0")]
+    is_selected: Option<bool>,
+    #[wd_lsdata(index = "1")]
+    is_secondary_selected: Option<bool>,
+    #[wd_lsdata(index = "2")]
+    cell_design: Option<SapTableCellDesign>,
+    #[wd_lsdata(index = "3")]
+    header_cell_ids: Option<String>,
+    #[wd_lsdata(index = "4")]
+    level: Option<i32>,
+    #[wd_lsdata(index = "5")]
+    status: Option<SapTableHierarchicalCellStatus>,
+    #[wd_lsdata(index = "6")]
+    status_enabled: Option<bool>,
+    #[wd_lsdata(index = "7")]
+    content_type_tooltip: Option<String>,
+    #[wd_lsdata(index = "8")]
+    custom_style: Option<String>,
+    #[wd_lsdata(index = "9")]
+    custom_data: Option<String>,
+}
+
+#[doc = "계층적 [`SapTable`](crate::element::complex::SapTable)의 셀"]
+#[derive(WdSubElement, custom_debug_derive::Debug)]
+#[wd_element(parent = "SapTable", parent_def = "SapTableDef")]
+#[wd_element(subcontrol_id = "HIC", element_name = "SapTableHierarchicalCell")]
+#[wd_element(
+    def = "SapTableHierarchicalCellDef",
+    def_doc = "[`SapTableHierarchicalCell`]의 정의"
+)]
+#[wd_element(lsdata = "SapTableHierarchicalCellLSData")]
+pub struct SapTableHierarchicalCell<'a> {
+    id: Cow<'static, str>,
+    #[wd_element(element_ref)]
+    #[debug(skip)]
+    element_ref: scraper::ElementRef<'a>,
+    #[wd_element(lsdata_field)]
+    lsdata: OnceCell<SapTableHierarchicalCellLSData>,
+    content: OnceCell<Option<ElementDefWrapper<'a>>>,
 }
 
 impl<'a> SapTableCell<'a> for SapTableHierarchicalCell<'a> {
@@ -56,18 +75,10 @@ impl<'a> SapTableCell<'a> for SapTableHierarchicalCell<'a> {
 }
 
 impl<'a> SapTableHierarchicalCell<'a> {
-    /// HTML 엘리먼트로부터 [`SapTableHierarchicalCell`]을 생성합니다.
-    pub const fn new(id: Cow<'static, str>, element_ref: scraper::ElementRef<'a>) -> Self {
-        Self {
-            id,
-            element_ref,
-            lsdata: OnceCell::new(),
-            content: OnceCell::new(),
-        }
-    }
-
     /// 셀을 [`SapTableCellWrapper`]로 감쌉니다.
     pub fn wrap(self) -> SapTableCellWrapper<'a> {
         SapTableCellWrapper::Hierarchical(self)
     }
 }
+
+use crate::element::complex::{SapTable, SapTableDef};

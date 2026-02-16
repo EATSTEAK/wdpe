@@ -2,44 +2,55 @@ use std::{borrow::Cow, cell::OnceCell};
 
 use scraper::Node;
 
-use crate::element::{Element, macros::define_element_interactable, property::Visibility};
+use crate::{WdElement, WdLsData, element::property::Visibility};
 
-define_element_interactable! {
-    #[doc = "텍스트 표시 뷰"]
-    TextView<"TV", "TextView"> {
-        text: OnceCell<String>
-    },
-    #[doc = "[`TextView`]의 정의"]
-    TextViewDef,
-    #[doc = "[`TextView`] 내부 데이터"]
-    TextViewLSData {
-        tooltip: String => "0",
-        required: bool => "1",
-        enabled: bool => "2",
-        design: String => "3",
-        layout: String => "4",
-        semantic_color: String => "5",
-        semantic_bg_color: String => "6",
-        is_nested: bool => "7",
-        visibility: Visibility => "8",
-        text_overflow: bool => "9",
-    }
+#[doc = "[`TextView`] 내부 데이터"]
+#[derive(WdLsData)]
+#[allow(unused)]
+pub struct TextViewLSData {
+    #[wd_lsdata(index = "0")]
+    tooltip: Option<String>,
+    #[wd_lsdata(index = "1")]
+    required: Option<bool>,
+    #[wd_lsdata(index = "2")]
+    enabled: Option<bool>,
+    #[wd_lsdata(index = "3")]
+    design: Option<String>,
+    #[wd_lsdata(index = "4")]
+    layout: Option<String>,
+    #[wd_lsdata(index = "5")]
+    semantic_color: Option<String>,
+    #[wd_lsdata(index = "6")]
+    semantic_bg_color: Option<String>,
+    #[wd_lsdata(index = "7")]
+    is_nested: Option<bool>,
+    #[wd_lsdata(index = "8")]
+    visibility: Option<Visibility>,
+    #[wd_lsdata(index = "9")]
+    text_overflow: Option<bool>,
+}
+
+#[doc = "텍스트 표시 뷰"]
+#[derive(WdElement)]
+#[wd_element(control_id = "TV", element_name = "TextView")]
+#[wd_element(interactable, textisable)]
+#[wd_element(def = "TextViewDef", def_doc = "[`TextView`]의 정의")]
+#[wd_element(lsdata = "TextViewLSData")]
+pub struct TextView<'a> {
+    id: Cow<'static, str>,
+    #[wd_element(element_ref)]
+    element_ref: scraper::ElementRef<'a>,
+    #[wd_element(lsdata_field)]
+    lsdata: OnceCell<TextViewLSData>,
+    #[wd_element(lsevents_field)]
+    lsevents: OnceCell<Option<crate::element::EventParameterMap>>,
+    text: OnceCell<String>,
 }
 
 impl<'a> TextView<'a> {
-    /// HTML 엘리먼트로부터 새로운 [`TextView`] 엘리먼트를 반환합니다.
-    pub fn new(id: Cow<'static, str>, element_ref: scraper::ElementRef<'a>) -> Self {
-        Self {
-            id,
-            element_ref,
-            lsdata: OnceCell::new(),
-            lsevents: OnceCell::new(),
-            text: OnceCell::new(),
-        }
-    }
-
     /// 내부 텍스트를 반환합니다.
     pub fn text(&self) -> &str {
+        use crate::element::Element as _;
         self.text.get_or_init(|| {
             self.element_ref()
                 .children()
