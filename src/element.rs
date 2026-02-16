@@ -395,7 +395,10 @@ impl TryFrom<&ElementWrapper<'_>> for String {
 
         Err(ElementError::InvalidContent {
             element: wrapper.id().to_string(),
-            content: "This element cannot be textised.".to_string(),
+            content: format!(
+                "Element {:?} does not support text conversion (textise).",
+                wrapper
+            ),
         }
         .into())
     }

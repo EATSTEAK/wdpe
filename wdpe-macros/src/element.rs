@@ -86,31 +86,50 @@ fn derive_wd_element_inner(input: TokenStream) -> Result<TokenStream> {
         });
     }
 
-    // Validate
-    let has_element_ref = field_infos.iter().any(|f| f.is_element_ref);
-    let has_lsdata = field_infos.iter().any(|f| f.is_lsdata);
+    // Validate: exactly one element_ref and lsdata_field
+    let element_ref_count = field_infos.iter().filter(|f| f.is_element_ref).count();
+    let lsdata_count = field_infos.iter().filter(|f| f.is_lsdata).count();
+    let lsevents_count = field_infos.iter().filter(|f| f.is_lsevents).count();
 
-    if !has_element_ref {
+    if element_ref_count == 0 {
         return Err(Error::new_spanned(
             struct_name,
             "WdElement requires exactly one field with #[wd_element(element_ref)]",
         ));
     }
-    if !has_lsdata {
+    if element_ref_count > 1 {
+        return Err(Error::new_spanned(
+            struct_name,
+            "WdElement found multiple fields with #[wd_element(element_ref)]; exactly one is required",
+        ));
+    }
+    if lsdata_count == 0 {
         return Err(Error::new_spanned(
             struct_name,
             "WdElement requires exactly one field with #[wd_element(lsdata_field)]",
         ));
     }
+    if lsdata_count > 1 {
+        return Err(Error::new_spanned(
+            struct_name,
+            "WdElement found multiple fields with #[wd_element(lsdata_field)]; exactly one is required",
+        ));
+    }
+    if lsevents_count > 1 {
+        return Err(Error::new_spanned(
+            struct_name,
+            "WdElement found multiple fields with #[wd_element(lsevents_field)]; at most one is allowed",
+        ));
+    }
 
-    if attrs.interactable && !field_infos.iter().any(|f| f.is_lsevents) {
+    if attrs.interactable && lsevents_count == 0 {
         return Err(Error::new_spanned(
             struct_name,
             "#[wd_element(interactable)] requires a field with #[wd_element(lsevents_field)]",
         ));
     }
 
-    if !attrs.interactable && field_infos.iter().any(|f| f.is_lsevents) {
+    if !attrs.interactable && lsevents_count > 0 {
         return Err(Error::new_spanned(
             struct_name,
             "Field marked with #[wd_element(lsevents_field)] has no effect without #[wd_element(interactable)]. \
