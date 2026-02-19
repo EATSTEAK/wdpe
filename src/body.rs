@@ -116,28 +116,59 @@ impl BodyUpdate {
                                 node: "full-update".to_string(),
                                 attribute: "windowid".to_string(),
                             })?;
-                    let content = child
-                        .first_child()
-                        .ok_or(UpdateBodyError::NoSuchContent("full-update".to_string()))?;
-                    let contentid =
-                        content
-                            .attribute("id")
-                            .ok_or(UpdateBodyError::NoSuchAttribute {
-                                node: "content-update".to_string(),
-                                attribute: "id".to_string(),
-                            })?;
-                    if content.tag_name().name() != "content-update" {
-                        return Err(UpdateBodyError::UnknownElement(
-                            content.tag_name().name().to_owned(),
-                        ));
+                    
+                    let full_children = child.children().collect::<Vec<Node>>();
+                    let mut content_found = false;
+                    let mut content_id = String::new();
+                    let mut content_text = String::new();
+                    
+                    for full_child in full_children {
+                        let tag_name = full_child.tag_name().name();
+                        match tag_name {
+                            "content-update" => {
+                                let contentid =
+                                    full_child
+                                        .attribute("id")
+                                        .ok_or(UpdateBodyError::NoSuchAttribute {
+                                            node: "content-update".to_string(),
+                                            attribute: "id".to_string(),
+                                        })?;
+                                content_id = contentid.to_owned();
+                                content_text = full_child
+                                    .text()
+                                    .ok_or(UpdateBodyError::NoSuchContent("full-content".to_string()))?
+                                    .to_owned();
+                                content_found = true;
+                            }
+                            "script-call" | "initialize-ids" | "model-update"
+                            | "animation-update" => {
+                                collect_auxiliary_node(
+                                    &full_child,
+                                    &mut script_calls,
+                                    &mut initialize_ids,
+                                    &mut model_updates,
+                                    &mut animation_updates,
+                                );
+                            }
+                            "" => {
+                                // Text-only node (whitespace between elements), skip
+                            }
+                            unknown => {
+                                tracing::warn!(
+                                    "Unknown full-update child {unknown} is found, ignore."
+                                );
+                            }
+                        }
                     }
+                    
+                    if !content_found {
+                        return Err(UpdateBodyError::NoSuchContent("full-update".to_string()));
+                    }
+                    
                     update_type = Some(BodyUpdateType::Full(
                         windowid.to_owned(),
-                        contentid.to_owned(),
-                        content
-                            .text()
-                            .ok_or(UpdateBodyError::NoSuchContent("full-content".to_string()))?
-                            .to_owned(),
+                        content_id,
+                        content_text,
                     ));
                 }
                 "delta-update" => {
@@ -519,5 +550,35 @@ mod test {
             Some(["test();".to_string()].as_slice())
         );
         assert_eq!(aux.initialize_ids.as_deref(), Some("INIT1"));
+    }
+
+    #[test]
+    fn test_body_update_full_with_auxiliary_nodes_inside() {
+        let xml = r#"<updates>
+            <full-update windowid="WID1">
+                <content-update id="content1">Hello World</content-update>
+                <script-call>insideScript();</script-call>
+                <initialize-ids>INIT123</initialize-ids>
+            </full-update>
+            <script-call>outsideScript();</script-call>
+        </updates>"#;
+
+        let update = BodyUpdate::new(xml).unwrap();
+        assert!(update.update.is_some());
+        assert!(
+            matches!(update.update.as_ref().unwrap(), BodyUpdateType::Full(w, c, _) if w == "WID1" && c == "content1")
+        );
+        // Should collect both script-calls: one inside full-update and one outside
+        assert_eq!(
+            update.auxiliary.script_calls.as_deref(),
+            Some(
+                [
+                    "insideScript();".to_string(),
+                    "outsideScript();".to_string()
+                ]
+                .as_slice()
+            )
+        );
+        assert_eq!(update.auxiliary.initialize_ids.as_deref(), Some("INIT123"));
     }
 }
