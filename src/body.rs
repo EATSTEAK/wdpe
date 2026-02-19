@@ -152,7 +152,7 @@ impl BodyUpdate {
                             }
                             unknown => {
                                 tracing::warn!(
-                                    "Unknown full-update child {unknown} is found, ignore."
+                                    "Unknown full-update child {unknown} found, ignoring."
                                 );
                             }
                         }
@@ -220,7 +220,7 @@ impl BodyUpdate {
                             }
                             _ => {
                                 tracing::warn!(
-                                    "Unknown delta-update child {tag_name} is found, ignore."
+                                    "Unknown delta-update child {tag_name} found, ignoring."
                                 );
                             }
                         };
@@ -240,7 +240,7 @@ impl BodyUpdate {
                     // Text-only node (whitespace between elements), skip
                 }
                 unknown => {
-                    tracing::warn!("Unknown update node {unknown} is found, ignore.");
+                    tracing::warn!("Unknown update node {unknown} found, ignoring.");
                 }
             }
         }
