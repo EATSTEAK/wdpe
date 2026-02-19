@@ -116,24 +116,23 @@ impl BodyUpdate {
                                 node: "full-update".to_string(),
                                 attribute: "windowid".to_string(),
                             })?;
-                    
+
                     let mut content_id: Option<String> = None;
                     let mut content_text: Option<String> = None;
-                    
+
                     for full_child in child.children() {
                         let tag_name = full_child.tag_name().name();
                         match tag_name {
                             "content-update" => {
-                                let contentid =
-                                    full_child
-                                        .attribute("id")
-                                        .ok_or(UpdateBodyError::NoSuchAttribute {
-                                            node: "content-update".to_string(),
-                                            attribute: "id".to_string(),
-                                        })?;
-                                let text = full_child
-                                    .text()
-                                    .ok_or(UpdateBodyError::NoSuchContent("content-update".to_string()))?;
+                                let contentid = full_child.attribute("id").ok_or(
+                                    UpdateBodyError::NoSuchAttribute {
+                                        node: "content-update".to_string(),
+                                        attribute: "id".to_string(),
+                                    },
+                                )?;
+                                let text = full_child.text().ok_or(
+                                    UpdateBodyError::NoSuchContent("content-update".to_string()),
+                                )?;
                                 content_id = Some(contentid.to_owned());
                                 content_text = Some(text.to_owned());
                             }
@@ -157,12 +156,12 @@ impl BodyUpdate {
                             }
                         }
                     }
-                    
+
                     let content_id = content_id
                         .ok_or(UpdateBodyError::NoSuchContent("full-update".to_string()))?;
                     let content_text = content_text
                         .ok_or(UpdateBodyError::NoSuchContent("full-update".to_string()))?;
-                    
+
                     update_type = Some(BodyUpdateType::Full(
                         windowid.to_owned(),
                         content_id,
