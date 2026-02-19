@@ -117,12 +117,10 @@ impl BodyUpdate {
                                 attribute: "windowid".to_string(),
                             })?;
                     
-                    let full_children = child.children().collect::<Vec<Node>>();
-                    let mut content_found = false;
-                    let mut content_id = String::new();
-                    let mut content_text = String::new();
+                    let mut content_id: Option<String> = None;
+                    let mut content_text: Option<String> = None;
                     
-                    for full_child in full_children {
+                    for full_child in child.children() {
                         let tag_name = full_child.tag_name().name();
                         match tag_name {
                             "content-update" => {
@@ -133,12 +131,11 @@ impl BodyUpdate {
                                             node: "content-update".to_string(),
                                             attribute: "id".to_string(),
                                         })?;
-                                content_id = contentid.to_owned();
-                                content_text = full_child
+                                let text = full_child
                                     .text()
-                                    .ok_or(UpdateBodyError::NoSuchContent("full-content".to_string()))?
-                                    .to_owned();
-                                content_found = true;
+                                    .ok_or(UpdateBodyError::NoSuchContent("content-update".to_string()))?;
+                                content_id = Some(contentid.to_owned());
+                                content_text = Some(text.to_owned());
                             }
                             "script-call" | "initialize-ids" | "model-update"
                             | "animation-update" => {
@@ -161,9 +158,10 @@ impl BodyUpdate {
                         }
                     }
                     
-                    if !content_found {
-                        return Err(UpdateBodyError::NoSuchContent("full-update".to_string()));
-                    }
+                    let content_id = content_id
+                        .ok_or(UpdateBodyError::NoSuchContent("full-update".to_string()))?;
+                    let content_text = content_text
+                        .ok_or(UpdateBodyError::NoSuchContent("full-update".to_string()))?;
                     
                     update_type = Some(BodyUpdateType::Full(
                         windowid.to_owned(),
