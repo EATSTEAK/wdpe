@@ -24,7 +24,7 @@ wdpe-macros = { version = "=0.1.0", path = "wdpe-macros", optional = true }
 custom_debug_derive = "0.6"
 derive_builder = "0.20"
 html-escape = "0.2"
-lol_html = "2.7.1"
+lol_html = "2.7"
 regex-lite = "0.1.9"
 reqwest = { version = "0.13", features = [
   "charset",
@@ -36,14 +36,14 @@ reqwest = { version = "0.13", features = [
   "form",
 ], default-features = false, optional = true }
 roxmltree = "0.21"
-scraper = { version = "0.25", features = ["atomic"], optional = true }
+scraper = { version = "0.26", features = ["atomic"], optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
 tokio = { version = "1", features = ["sync"] }
 tracing = "0.1"
 url = "2.5.8"
-ureq = { version = "3.2.0", optional = true }
+ureq = { version = "3.3", optional = true }
 
 [dev-dependencies]
 tokio-test = "0.4.5"
