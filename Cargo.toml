@@ -16,6 +16,8 @@ readme = "README.md"
 default = ["element"]
 element = ["dep:scraper", "dep:inventory", "dep:wdpe-macros"]
 reqwest = ["dep:reqwest"]
+reqwest-rustls = ["reqwest", "reqwest/rustls"]
+reqwest-rustls-no-provider = ["reqwest", "reqwest/rustls-no-provider"]
 ureq = ["dep:ureq"]
 
 [dependencies]
@@ -29,7 +31,6 @@ regex-lite = "0.1.9"
 reqwest = { version = "0.13", features = [
   "charset",
   "http2",
-  "rustls",
   "cookies",
   "gzip",
   "brotli",
